@@ -1,4 +1,4 @@
-package com.obhoy.app.service
+package com.obhoy.app.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,13 +9,14 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.obhoy.app.engine.LocationLoggerWorker
-import java.util.concurrent.TimeUnit
+import com.obhoy.app.service.ObhoyForegroundService
 
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            Log.i(TAG, "Boot/Replaced action received ($action). Rescheduling background tasks and foreground service.")
             
             // 1. Reschedule Periodic Location Logging with WorkManager
             scheduleLocationLoggerWork(context)
@@ -39,7 +40,7 @@ class BootReceiver : BroadcastReceiver() {
 
     private fun startBackgroundService(context: Context) {
         val serviceIntent = Intent(context, ObhoyForegroundService::class.java).apply {
-            action = ACTION_START_MONITORING
+            action = ObhoyForegroundService.ACTION_START_MONITORING
         }
 
         try {
@@ -49,11 +50,11 @@ class BootReceiver : BroadcastReceiver() {
                 context.startService(serviceIntent)
             }
         } catch (e: Exception) {
-            Log.e("BootReceiver", "Failed to start ObhoyForegroundService from BootReceiver", e)
+            Log.e(TAG, "Failed to start ObhoyForegroundService from BootReceiver", e)
         }
     }
 
     companion object {
-        const val ACTION_START_MONITORING = "com.obhoy.app.ACTION_START_MONITORING"
+        private const val TAG = "BootReceiver"
     }
 }
