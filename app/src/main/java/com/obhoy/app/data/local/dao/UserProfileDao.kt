@@ -6,6 +6,9 @@ import com.obhoy.app.data.local.entity.UserProfileEntity
 @Dao
 interface UserProfileDao {
     @Query("SELECT * FROM user_profile WHERE id = 1 LIMIT 1")
+    fun getUserProfileSync(): UserProfileEntity?
+
+    @Query("SELECT * FROM user_profile WHERE id = 1 LIMIT 1")
     suspend fun getUserProfile(): UserProfileEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -14,4 +17,3 @@ interface UserProfileDao {
     @Query("DELETE FROM user_profile")
     suspend fun clearProfile()
 }
-
