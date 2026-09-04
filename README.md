@@ -63,23 +63,44 @@ Obhoy operates completely locally on-device with **zero external server dependen
 
 ```
 obhoy/
+├── .github/
+│   └── workflows/
+│       └── android.yml       <-- GitHub Actions CI/CD pipeline
 ├── PRIVACY_POLICY.md        <-- Legal privacy policy
 ├── TERMS_OF_SERVICE.md      <-- Terms and liability disclaimers
 ├── SECURITY.md              <-- Vulnerability reporting rules
 ├── README.md                <-- Architecture and project overview
+├── gradle.properties        <-- AndroidX, JVM heap & build performance flags
 ├── build.gradle.kts         <-- Root build script
-├── settings.gradle.kts
-└── app/                     <-- Android application module
-    ├── build.gradle.kts
+├── settings.gradle.kts      <-- Dependency repository management & module includes
+└── app/                     <-- Primary Android application module
+    ├── build.gradle.kts     <-- Module dependencies (Room, SQLCipher, WorkManager)
     └── src/main/
         ├── AndroidManifest.xml
         ├── java/com/obhoy/app/
-        │   ├── data/        <-- SQLCipher database & entities
-        │   ├── service/     <-- Foreground & Accessibility listeners
-        │   ├── sensor/      <-- GNSS ephemeris & Barometer engines
-        │   ├── engine/      <-- Dispatcher, SMS compiler, PIN verifier
-        │   └── ui/          <-- Onboarding, Active Escort, Decoy views
-        └── res/             <-- Layouts, drawables, accessibility XML
+        │   ├── ObhoyApplication.kt <-- Central Application class & dependency injection
+        │   ├── data/
+        │   │   ├── local/
+        │   │   │   ├── ObhoyDatabase.kt <-- SQLCipher encrypted Room vault
+        │   │   │   ├── dao/             <-- UserProfileDao, EmergencyContactDao, LocationHistoryDao
+        │   │   │   └── entity/          <-- UserProfileEntity, EmergencyContactEntity, LocationHistoryEntity
+        │   │   └── repository/          <-- Synchronous (*Sync) & suspend Repository implementations
+        │   ├── service/
+        │   │   └── ObhoyForegroundService.kt <-- Persistent foreground worker (Location & Mic types)
+        │   ├── receiver/
+        │   │   ├── ScreenToggleReceiver.kt  <-- Quad-click power button trigger listener
+        │   │   └── BootReceiver.kt          <-- BOOT_COMPLETED service & WorkManager restarter
+        │   ├── sensor/
+        │   │   ├── GnssSatelliteEngine.kt   <-- Raw GNSS & satellite positioning engine
+        │   │   └── BarometerElevationEngine.kt <-- Barometric pressure & floor level estimator
+        │   ├── engine/
+        │   │   ├── DispatchManager.kt      <-- Emergency alert pipeline orchestrator
+        │   │   ├── LocationLoggerWorker.kt <-- WorkManager periodic location task
+        │   │   └── SmsPayloadCompiler.kt   <-- Location URL & floor payload formatter
+        │   ├── util/
+        │   │   └── SmsDispatcher.kt        <-- Multipart SMS execution engine
+        │   └── ui/                         <-- Onboarding, Active Escort, Dual-PIN Decoy views
+        └── res/                            <-- Dynamic assets, strings, layouts, accessibility XML
 ---
 ```
 ## Prerequisites & Installation
