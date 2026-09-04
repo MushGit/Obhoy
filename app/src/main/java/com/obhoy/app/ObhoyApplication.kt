@@ -13,6 +13,7 @@ import com.obhoy.app.engine.GnssSatelliteEngine
 import com.obhoy.app.engine.LocationLoggerWorker
 import com.obhoy.app.util.CryptoUtils
 import com.obhoy.app.util.NotificationHelper
+import net.sqlcipher.database.SQLiteDatabase
 import java.util.concurrent.TimeUnit
 
 class ObhoyApplication : Application() {
@@ -20,7 +21,6 @@ class ObhoyApplication : Application() {
     lateinit var database: ObhoyDatabase
         private set
 
-    // Repositories
     lateinit var userProfileRepository: UserProfileRepository
         private set
     lateinit var emergencyContactRepository: EmergencyContactRepository
@@ -28,7 +28,6 @@ class ObhoyApplication : Application() {
     lateinit var locationRepository: LocationRepository
         private set
 
-    // Sensor Engines
     lateinit var gnssEngine: GnssSatelliteEngine
         private set
     lateinit var barometerEngine: BarometerElevationEngine
@@ -37,14 +36,17 @@ class ObhoyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // 1. Initialize Notification Channels
+        // 1. Initialize SQLCipher native C++ libraries before any DB operations
+        SQLiteDatabase.loadLibs(this)
+
+        // 2. Setup Notification Channels
         NotificationHelper.createNotificationChannels(this)
 
-        // 2. Initialize Encrypted SQLCipher Database
+        // 3. Initialize Encrypted Room Database
         val passphrase = getOrCreateDatabasePassphrase()
         database = ObhoyDatabase.getInstance(this, passphrase)
 
-        // 3. Initialize Engines & Repositories
+        // 4. Initialize Engines & Repositories
         gnssEngine = GnssSatelliteEngine(this)
         barometerEngine = BarometerElevationEngine(this)
 
@@ -56,7 +58,7 @@ class ObhoyApplication : Application() {
             barometerEngine
         )
 
-        // 4. Schedule Periodic Background Location Logger
+        // 5. Schedule Background Telemetry Caching
         scheduleLocationLoggerWork()
     }
 
@@ -76,7 +78,7 @@ class ObhoyApplication : Application() {
 
     private fun scheduleLocationLoggerWork() {
         val locationWorkRequest = PeriodicWorkRequestBuilder<LocationLoggerWorker>(
-            15, TimeUnit.MINUTES // Minimum interval for WorkManager
+            15, TimeUnit.MINUTES
         ).build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
