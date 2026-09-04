@@ -8,14 +8,14 @@ object SmsPayloadCompiler {
         userProfile: UserProfileEntity,
         latitude: Double,
         longitude: Double,
-        elevationFloor: String
+        floorEstimate: String,
+        timestamp: Long
     ): String {
-        val mapsUrl = "https://maps.google.com/?q=$latitude,$longitude"
+        val mapsLink = "https://maps.google.com/?q=$latitude,$longitude"
         val name = userProfile.fullName
-        val nidPart = userProfile.nationalId?.let { " NID:$it" } ?: ""
+        val nid = userProfile.nationalId?.let { " NID:$it" } ?: ""
 
-        // Keep payload under 160 GSM single-segment characters
-        return "SOS! $name$nidPart needs help. Loc: $mapsUrl ($elevationFloor). Sent via Obhoy App."
+        // Keep concise to fit standard 160-character GSM limits
+        return "EMERGENCY! $name$nid needs help! Location: $mapsLink Floor: $floorEstimate"
     }
 }
-
