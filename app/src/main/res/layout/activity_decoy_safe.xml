@@ -1,1 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/decoy_bg"
+    android:orientation="vertical"
+    tools:context=".ui.escort.DecoySafeActivity">
+
+    <!-- Decoy App Bar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarDecoy"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/decoy_surface"
+        android:elevation="2dp"
+        app:title="@string/decoy_safe_title"
+        app:titleTextColor="@color/decoy_text_primary" />
+
+    <!-- Disguise Notepad Content Area -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="24dp">
+
+        <!-- Empty State Disguise Illustration & Text -->
+        <LinearLayout
+            android:id="@+id/llEmptyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:contentDescription="Notes icon"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="@color/decoy_text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/decoy_empty_state"
+                android:textColor="@color/decoy_text_secondary"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Dummy Note Input Field (Simulates functional notepad) -->
+        <EditText
+            android:id="@+id/etDummyNote"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:gravity="top|start"
+            android:hint="Tap here to take a quick note..."
+            android:importantForAutofill="no"
+            android:inputType="textMultiLine"
+            android:textColor="@color/decoy_text_primary"
+            android:textColorHint="@color/decoy_text_secondary"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- Floating Action Button for Adding Fake Note -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddNote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="24dp"
+        android:contentDescription="Add new note"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="@color/decoy_text_primary"
+        app:tint="@color/white" />
+
+</LinearLayout>
 
