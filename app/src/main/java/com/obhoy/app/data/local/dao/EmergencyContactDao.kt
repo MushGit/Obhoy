@@ -6,6 +6,9 @@ import com.obhoy.app.data.local.entity.EmergencyContactEntity
 @Dao
 interface EmergencyContactDao {
     @Query("SELECT * FROM emergency_contacts ORDER BY priorityOrder ASC")
+    fun getAllContactsSync(): List<EmergencyContactEntity>
+
+    @Query("SELECT * FROM emergency_contacts ORDER BY priorityOrder ASC")
     suspend fun getAllContacts(): List<EmergencyContactEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
