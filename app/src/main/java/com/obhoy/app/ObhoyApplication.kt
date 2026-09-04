@@ -9,10 +9,12 @@ import com.obhoy.app.data.repository.EmergencyContactRepository
 import com.obhoy.app.data.repository.LocationRepository
 import com.obhoy.app.data.repository.UserProfileRepository
 import com.obhoy.app.engine.BarometerElevationEngine
+import com.obhoy.app.engine.DispatchManager
 import com.obhoy.app.engine.GnssSatelliteEngine
 import com.obhoy.app.engine.LocationLoggerWorker
 import com.obhoy.app.util.CryptoUtils
 import com.obhoy.app.util.NotificationHelper
+import com.obhoy.app.util.SmsDispatcher
 import net.sqlcipher.database.SQLiteDatabase
 import java.util.concurrent.TimeUnit
 
@@ -31,6 +33,11 @@ class ObhoyApplication : Application() {
     lateinit var gnssEngine: GnssSatelliteEngine
         private set
     lateinit var barometerEngine: BarometerElevationEngine
+        private set
+
+    lateinit var smsDispatcher: SmsDispatcher
+        private set
+    lateinit var dispatchManager: DispatchManager
         private set
 
     override fun onCreate() {
@@ -58,7 +65,17 @@ class ObhoyApplication : Application() {
             barometerEngine
         )
 
-        // 5. Schedule Background Telemetry Caching
+        // 5. Initialize Dispatch System Utilities
+        smsDispatcher = SmsDispatcher(this)
+        dispatchManager = DispatchManager(
+            context = this,
+            emergencyContactRepository = emergencyContactRepository,
+            userProfileRepository = userProfileRepository,
+            locationRepository = locationRepository,
+            smsDispatcher = smsDispatcher
+        )
+
+        // 6. Schedule Background Telemetry Caching
         scheduleLocationLoggerWork()
     }
 
