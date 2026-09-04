@@ -1,1 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Theme Colors -->
+    <color name="obhoy_primary">#D32F2F</color>
+    <color name="obhoy_primary_dark">#9A0007</color>
+    <color name="obhoy_accent">#FF6659</color>
+
+    <!-- Coercion & Decoy Neutral Colors -->
+    <color name="decoy_bg">#F5F5F5</color>
+    <color name="decoy_surface">#FFFFFF</color>
+    <color name="decoy_text_primary">#212121</color>
+    <color name="decoy_text_secondary">#757575</color>
+
+    <!-- Emergency State Colors -->
+    <color name="emergency_red">#B00020</color>
+    <color name="safety_green">#2E7D32</color>
+    <color name="warning_yellow">#F57F17</color>
+
+    <!-- Standard UI Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray_light">#E0E0E0</color>
+    <color name="gray_dark">#424242</color>
+</resources>
 
