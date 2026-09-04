@@ -1,1 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Obhoy</string>
+
+    <!-- Onboarding & Setup -->
+    <string name="title_profile_setup">User Profile Setup</string>
+    <string name="hint_full_name">Full Name</string>
+    <string name="hint_blood_group">Blood Group (e.g., B+)</string>
+    <string name="hint_medical_notes">Medical Notes / Allergies</string>
+
+    <string name="title_contact_management">Emergency Contacts</string>
+    <string name="hint_contact_name">Contact Name</string>
+    <string name="hint_contact_phone">Mobile Number (+880...)</string>
+    <string name="btn_add_contact">Add Contact</string>
+
+    <string name="title_pin_setup">Security PIN Setup</string>
+    <string name="hint_true_pin">Primary PIN (4–6 Digits)</string>
+    <string name="hint_decoy_pin">Decoy PIN (Coercion Trigger)</string>
+    <string name="btn_complete_setup">Complete Setup</string>
+
+    <!-- Dashboard & Controls -->
+    <string name="status_protected">System Protection Active</string>
+    <string name="btn_trigger_sos">MANUAL SOS DISPATCH</string>
+    <string name="btn_start_escort">Start Active Escort</string>
+    <string name="btn_stop_escort">Disarm Escort Session</string>
+
+    <!-- Active Escort -->
+    <string name="title_active_escort">Active Escort Mode</string>
+    <string name="label_countdown_prompt">Enter True PIN to Check-in</string>
+    <string name="btn_checkin">I Am Safe (Check-In)</string>
+
+    <!-- Decoy Screen -->
+    <string name="decoy_safe_title">Notes &amp; Tasks</string>
+    <string name="decoy_empty_state">No active notes saved.</string>
+</resources>
 
