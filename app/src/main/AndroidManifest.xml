@@ -1,1 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Emergency Dispatch & Cellular Permissions -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- Location & Sensor Telemetry Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
+
+    <!-- Local Audio Evidence Collection -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Service Execution & WakeLock Permissions -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:name=".ObhoyApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/obhoy"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/obhoy"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Obhoy"
+        tools:targetApi="34">
+
+        <!-- Entry Onboarding / Main Activity -->
+        <activity
+            android:name=".ui.onboarding.OnboardingActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ui.escort.ActiveEscortActivity" android:exported="false" />
+        <activity android:name=".ui.escort.DecoySafeActivity" android:exported="false" />
+        <activity android:name=".ui.profile.ProfileActivity" android:exported="false" />
+
+        <!-- Sticky Foreground Service for Background Persistence -->
+        <service
+            android:name=".service.ObhoyForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Covert offline safety dispatch and telemetry cache" />
+        </service>
+
+        <!-- Active Escort Countdown Service -->
+        <service
+            android:name=".service.ActiveEscortTimerService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Power Button Quad-Click Accessibility Listener -->
+        <service
+            android:name=".service.PowerButtonAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+    </application>
+</manifest>
 
