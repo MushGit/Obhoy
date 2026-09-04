@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -14,9 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.R
-import com.obhoy.app.engine.DispatchManager
-import com.obhoy.app.sensor.BarometerElevationEngine
-import com.obhoy.app.sensor.GnssSatelliteEngine
+import com.obhoy.app.receiver.ScreenToggleReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -24,20 +23,19 @@ import kotlinx.coroutines.launch
 
 class ObhoyForegroundService : Service() {
 
-    private lateinit var gnssEngine: GnssSatelliteEngine
-    private lateinit var barometerEngine: BarometerElevationEngine
     private val serviceScope = CoroutineScope(Dispatchers.IO)
+    private var screenToggleReceiver: ScreenToggleReceiver? = null
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         promoteToForegroundSafely()
 
-        gnssEngine = GnssSatelliteEngine(this)
-        barometerEngine = BarometerElevationEngine(this)
+        val app = application as ObhoyApplication
+        app.gnssEngine.startListening()
+        app.barometerEngine.startListening()
 
-        gnssEngine.startListening()
-        barometerEngine.startListening()
+        registerScreenToggleReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -49,21 +47,36 @@ class ObhoyForegroundService : Service() {
         return START_STICKY
     }
 
+    private fun registerScreenToggleReceiver() {
+        if (screenToggleReceiver == null) {
+            screenToggleReceiver = ScreenToggleReceiver()
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(screenToggleReceiver, filter, RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(screenToggleReceiver, filter)
+            }
+        }
+    }
+
+    private fun unregisterScreenToggleReceiver() {
+        screenToggleReceiver?.let { receiver ->
+            try {
+                unregisterReceiver(receiver)
+            } catch (e: IllegalArgumentException) {
+                // Receiver was not registered
+            }
+            screenToggleReceiver = null
+        }
+    }
+
     private fun executeEmergencyWorkflow() {
         serviceScope.launch {
             val app = application as ObhoyApplication
-            val dispatchManager = DispatchManager(this@ObhoyForegroundService, app.database)
-
-            val location = gnssEngine.lastKnownLocation
-            val lat = location?.latitude ?: 0.0
-            val lng = location?.longitude ?: 0.0
-            val floor = barometerEngine.getEstimatedFloor()
-
-            dispatchManager.executeSmsDispatch(
-                latitude = lat,
-                longitude = lng,
-                floorEstimate = floor
-            )
+            app.dispatchManager.triggerEmergencyDispatch("FOREGROUND_SERVICE_ACTION")
         }
     }
 
@@ -94,7 +107,7 @@ class ObhoyForegroundService : Service() {
                 startForeground(NOTIFICATION_ID, notification)
             }
         } catch (e: SecurityException) {
-            // Fallback for API 34 security exceptions during background promotion
+            // Fallback for security exceptions during background promotion
             startForeground(NOTIFICATION_ID, notification)
         }
     }
@@ -122,8 +135,12 @@ class ObhoyForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        gnssEngine.stopListening()
-        barometerEngine.stopListening()
+        unregisterScreenToggleReceiver()
+
+        val app = application as ObhoyApplication
+        app.gnssEngine.stopListening()
+        app.barometerEngine.stopListening()
+
         serviceScope.cancel()
     }
 
