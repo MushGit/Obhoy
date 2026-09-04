@@ -4,32 +4,32 @@ import at.favre.lib.crypto.bcrypt.BCrypt
 import com.obhoy.app.data.local.dao.UserProfileDao
 import javax.inject.Inject
 
-sealed class PinResult {
-    object TruePin : PinResult()
-    object DecoyPin : PinResult()
-    object Invalid : PinResult()
+sealed class PinVerificationResult {
+    object TruePinSuccess : PinVerificationResult()
+    object DecoyPinSuccess : PinVerificationResult()
+    object InvalidPin : PinVerificationResult()
 }
 
-class PinVerificationEngine(
+class PinVerificationEngine @Inject constructor(
     private val userProfileDao: UserProfileDao
 ) {
 
-    suspend fun verifyPin(enteredPin: String): PinResult {
-        val profile = userProfileDao.getUserProfile() ?: return PinResult.Invalid
+    suspend fun verifyPin(enteredPin: String): PinVerificationResult {
+        val profile = userProfileDao.getUserProfile() ?: return PinVerificationResult.InvalidPin
 
-        // Check against True PIN hash
-        val trueVerification = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.truePinHash)
-        if (trueVerification.verified) {
-            return PinResult.TruePin
+        // Verify True PIN
+        val trueResult = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.truePinHash)
+        if (trueResult.verified) {
+            return PinVerificationResult.TruePinSuccess
         }
 
-        // Check against Decoy PIN hash
-        val decoyVerification = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.decoyPinHash)
-        if (decoyVerification.verified) {
-            return PinResult.DecoyPin
+        // Verify Decoy PIN
+        val decoyResult = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.decoyPinHash)
+        if (decoyResult.verified) {
+            return PinVerificationResult.DecoyPinSuccess
         }
 
-        return PinResult.Invalid
+        return PinVerificationResult.InvalidPin
     }
 
     companion object {
@@ -38,4 +38,3 @@ class PinVerificationEngine(
         }
     }
 }
-
