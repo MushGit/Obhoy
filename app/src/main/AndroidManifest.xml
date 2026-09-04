@@ -108,6 +108,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Hardware Screen Toggle Fallback Receiver -->
+        <receiver
+            android:name=".receiver.ScreenToggleReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SCREEN_OFF" />
+                <action android:name="android.intent.action.SCREEN_ON" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
