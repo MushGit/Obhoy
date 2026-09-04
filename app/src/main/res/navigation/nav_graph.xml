@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/profileSetupFragment">
+
+    <!-- Step 1: User Profile Setup Fragment -->
+    <fragment
+        android:id="@+id/profileSetupFragment"
+        android:name="com.obhoy.app.ui.onboarding.ProfileSetupFragment"
+        android:label="Profile Setup"
+        tools:layout="@layout/fragment_profile_setup">
+        <action
+            android:id="@+id/action_profileSetup_to_contactManagement"
+            app:destination="@id/contactManagementFragment" />
+    </fragment>
+
+    <!-- Step 2: Emergency Contact Management Fragment -->
+    <fragment
+        android:id="@+id/contactManagementFragment"
+        android:name="com.obhoy.app.ui.onboarding.ContactManagementFragment"
+        android:label="Contact Management"
+        tools:layout="@layout/fragment_contact_management">
+        <action
+            android:id="@+id/action_contactManagement_to_pinSetup"
+            app:destination="@id/pinSetupFragment" />
+    </fragment>
+
+    <!-- Step 3: Security PIN Setup Fragment -->
+    <fragment
+        android:id="@+id/pinSetupFragment"
+        android:name="com.obhoy.app.ui.onboarding.PinSetupFragment"
+        android:label="PIN Setup"
+        tools:layout="@layout/fragment_pin_setup">
+        <action
+            android:id="@+id/action_pinSetup_to_profileActivity"
+            app:destination="@id/profileActivity"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Destination: Main Control Center Dashboard Activity -->
+    <activity
+        android:id="@+id/profileActivity"
+        android:name="com.obhoy.app.ui.profile.ProfileActivity"
+        android:label="Obhoy Control Center"
+        tools:layout="@layout/activity_profile" />
+
+</navigation>
