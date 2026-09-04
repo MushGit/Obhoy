@@ -26,10 +26,10 @@ jobs:
         gradle-version: '8.5'
 
     - name: Run Unit Tests
-      run: gradle testDebugUnitTest --continue
+      run: gradle testDebugUnitTest --continue --info
 
     - name: Build Debug APK
-      run: gradle assembleDebug
+      run: gradle assembleDebug --info
 
     - name: Upload Debug APK Artifact
       uses: actions/upload-artifact@v4
