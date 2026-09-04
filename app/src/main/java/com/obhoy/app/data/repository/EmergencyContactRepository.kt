@@ -9,6 +9,13 @@ class EmergencyContactRepository(
     private val emergencyContactDao: EmergencyContactDao
 ) {
 
+    /**
+     * Synchronous blocking getter for direct access on background IO threads (e.g., DispatchManager).
+     */
+    fun getEmergencyContactsSync(): List<EmergencyContactEntity> {
+        return emergencyContactDao.getAllContactsSync()
+    }
+
     suspend fun getAllContacts(): List<EmergencyContactEntity> = withContext(Dispatchers.IO) {
         emergencyContactDao.getAllContacts()
     }
@@ -25,4 +32,3 @@ class EmergencyContactRepository(
         emergencyContactDao.clearAllContacts()
     }
 }
-
