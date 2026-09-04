@@ -10,7 +10,6 @@ import com.obhoy.app.data.local.dao.UserProfileDao
 import com.obhoy.app.data.local.entity.EmergencyContactEntity
 import com.obhoy.app.data.local.entity.LocationHistoryEntity
 import com.obhoy.app.data.local.entity.UserProfileEntity
-import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SupportFactory
 
 @Database(
