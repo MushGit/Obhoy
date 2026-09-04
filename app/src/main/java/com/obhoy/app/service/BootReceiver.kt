@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -38,13 +39,21 @@ class BootReceiver : BroadcastReceiver() {
 
     private fun startBackgroundService(context: Context) {
         val serviceIntent = Intent(context, ObhoyForegroundService::class.java).apply {
-            action = ObhoyForegroundService.ACTION_START_MONITORING
+            action = ACTION_START_MONITORING
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        } catch (e: Exception) {
+            Log.e("BootReceiver", "Failed to start ObhoyForegroundService from BootReceiver", e)
         }
+    }
+
+    companion object {
+        const val ACTION_START_MONITORING = "com.obhoy.app.ACTION_START_MONITORING"
     }
 }
