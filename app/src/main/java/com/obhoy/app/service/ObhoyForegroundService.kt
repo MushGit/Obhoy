@@ -8,14 +8,31 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.R
+import com.obhoy.app.engine.DispatchManager
+import com.obhoy.app.sensor.BarometerElevationEngine
+import com.obhoy.app.sensor.GnssSatelliteEngine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ObhoyForegroundService : Service() {
+
+    private lateinit var gnssEngine: GnssSatelliteEngine
+    private lateinit var barometerEngine: BarometerElevationEngine
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
+
+        gnssEngine = GnssSatelliteEngine(this)
+        barometerEngine = BarometerElevationEngine(this)
+
+        gnssEngine.startListening()
+        barometerEngine.startListening()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -26,7 +43,27 @@ class ObhoyForegroundService : Service() {
     }
 
     private fun executeEmergencyWorkflow() {
-        // TODO: Hook into DispatchManager to collect GNSS/Barometer data & send SMS
+        serviceScope.launch {
+            val app = application as ObhoyApplication
+            val dispatchManager = DispatchManager(this@ObhoyForegroundService, app.database)
+
+            val location = gnssEngine.lastKnownLocation
+            val lat = location?.latitude ?: 0.0
+            val lng = location?.longitude ?: 0.0
+            val floor = barometerEngine.getEstimatedFloor()
+
+            dispatchManager.executeSmsDispatch(
+                latitude = lat,
+                longitude = lng,
+                floorEstimate = floor
+            )
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        gnssEngine.stopListening()
+        barometerEngine.stopListening()
     }
 
     private fun createNotification(): Notification {
@@ -58,4 +95,3 @@ class ObhoyForegroundService : Service() {
         const val ACTION_TRIGGER_EMERGENCY = "com.obhoy.app.ACTION_TRIGGER_EMERGENCY"
     }
 }
-
