@@ -9,6 +9,13 @@ class UserProfileRepository(
     private val userProfileDao: UserProfileDao
 ) {
 
+    /**
+     * Synchronous blocking getter for direct access on background IO threads (e.g., DispatchManager).
+     */
+    fun getUserProfileSync(): UserProfileEntity? {
+        return userProfileDao.getUserProfileSync()
+    }
+
     suspend fun getUserProfile(): UserProfileEntity? = withContext(Dispatchers.IO) {
         userProfileDao.getUserProfile()
     }
@@ -40,4 +47,3 @@ class UserProfileRepository(
         userProfileDao.clearUserProfile()
     }
 }
-
