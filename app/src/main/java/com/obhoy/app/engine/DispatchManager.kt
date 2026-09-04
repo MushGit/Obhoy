@@ -3,45 +3,51 @@ package com.obhoy.app.engine
 import android.content.Context
 import android.telephony.SmsManager
 import com.obhoy.app.data.local.ObhoyDatabase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class DispatchManager(private val context: Context) {
+class DispatchManager(
+    private val context: Context,
+    private val database: ObhoyDatabase
+) {
 
-    private val db = (context.applicationContext as com.obhoy.app.ObhoyApplication).database
+    suspend fun executeSmsDispatch(
+        latitude: Double,
+        longitude: Double,
+        floorEstimate: String
+    ) = withContext(Dispatchers.IO) {
+        val userProfile = database.userProfileDao().getUserProfile() ?: return@withContext
+        val contacts = database.emergencyContactDao().getAllContacts()
 
-    fun executeEmergencyDispatch(latitude: Double, longitude: Double, elevationFloor: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val profile = db.userProfileDao().getUserProfile() ?: return@launch
-            val contacts = db.emergencyContactDao().getAllContacts()
+        if (contacts.isEmpty()) return@withContext
 
-            if (contacts.isEmpty()) return@launch
+        val payload = SmsPayloadCompiler.compileEmergencySms(
+            userProfile = userProfile,
+            latitude = latitude,
+            longitude = longitude,
+            floorEstimate = floorEstimate,
+            timestamp = System.currentTimeMillis()
+        )
 
-            val messagePayload = SmsPayloadCompiler.compileEmergencySms(
-                userProfile = profile,
-                latitude = latitude,
-                longitude = longitude,
-                elevationFloor = elevationFloor
-            )
+        val smsManager = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            context.getSystemService(SmsManager::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            SmsManager.getDefault()
+        }
 
-            val smsManager = context.getSystemService(SmsManager::class.java)
-
-            for (contact in contacts) {
-                try {
-                    val parts = smsManager.divideMessage(messagePayload)
-                    smsManager.sendMultipartTextMessage(
-                        contact.phoneNumber,
-                        null,
-                        parts,
-                        null,
-                        null
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+        for (contact in contacts) {
+            try {
+                smsManager.sendTextMessage(
+                    contact.phoneNumber,
+                    null,
+                    payload,
+                    null,
+                    null
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 }
-
