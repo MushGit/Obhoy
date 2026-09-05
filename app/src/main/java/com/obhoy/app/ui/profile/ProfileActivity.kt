@@ -33,12 +33,10 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun setupNavigationDrawer() {
-        // Top App Bar Menu Hamburger Click Listener
         binding.topAppBar.setNavigationOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        // Drawer Items Click Listener
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_manage_contacts -> {
@@ -90,12 +88,14 @@ class ProfileActivity : AppCompatActivity() {
         binding.rvDashboardContacts.layoutManager = LinearLayoutManager(this)
 
         lifecycleScope.launch {
-            val contacts = app.database.userProfileDao().getAllEmergencyContacts()
+            val profile = app.database.userProfileDao().getUserProfile()
+            val contacts = profile?.emergencyContacts ?: emptyList()
+
             if (contacts.isEmpty()) {
                 Toast.makeText(
                     this@ProfileActivity,
                     "No emergency contacts registered yet.",
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_SHORT
                 ).show()
             } else {
                 // Attach contacts adapter to populated list
