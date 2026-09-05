@@ -3,6 +3,8 @@ package com.obhoy.app.engine
 import at.favre.lib.crypto.bcrypt.BCrypt
 import com.obhoy.app.data.local.dao.UserProfileDao
 import javax.inject.Inject
+import javax.inject.Singleton
+
 
 sealed class PinVerificationResult {
     object TruePinSuccess : PinVerificationResult()
