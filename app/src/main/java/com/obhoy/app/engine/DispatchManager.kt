@@ -31,7 +31,7 @@ class DispatchManager(
                 val lastKnownLocation = locationRepository.getLatestLocationSync()
                 val lat = lastKnownLocation?.latitude ?: 0.0
                 val lng = lastKnownLocation?.longitude ?: 0.0
-                val floor = lastKnownLocation?.estimatedFloor?.let { "Floor $it" } ?: "Ground"
+                val floor = lastKnownLocation?.floorEstimate ?: "Ground"
 
                 executeSmsDispatch(
                     latitude = lat,
