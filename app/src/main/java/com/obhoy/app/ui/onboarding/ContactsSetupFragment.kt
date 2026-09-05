@@ -26,7 +26,7 @@ class ContactsSetupFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setupListeners()
@@ -101,4 +101,3 @@ class ContactsSetupFragment : Fragment() {
         _binding = null
     }
 }
-
