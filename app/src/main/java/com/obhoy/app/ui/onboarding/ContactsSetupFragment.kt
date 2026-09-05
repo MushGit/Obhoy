@@ -54,7 +54,15 @@ class ContactsSetupFragment : Fragment() {
         }
 
         binding.btnNextToPin.setOnClickListener {
-            findNavController().navigate(R.id.action_contactsFragment_to_pinSetupFragment)
+            val app = requireActivity().application as ObhoyApplication
+            lifecycleScope.launch {
+                val contacts = app.database.emergencyContactDao().getAllContacts()
+                if (contacts.isEmpty()) {
+                    Toast.makeText(requireContext(), "Add at least one emergency contact to proceed", Toast.LENGTH_SHORT).show()
+                } else {
+                    findNavController().navigate(R.id.action_contactsFragment_to_pinSetupFragment)
+                }
+            }
         }
     }
 
