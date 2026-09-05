@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.R
+import com.obhoy.app.data.repository.WeatherRepository
 import com.obhoy.app.receiver.ScreenToggleReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,7 @@ class ObhoyForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
     private var screenToggleReceiver: ScreenToggleReceiver? = null
+    private val weatherRepository = WeatherRepository()
 
     override fun onCreate() {
         super.onCreate()
@@ -82,6 +84,19 @@ class ObhoyForegroundService : Service() {
             try {
                 Log.d(TAG, "Initiating emergency dispatch workflow...")
                 val app = application as ObhoyApplication
+
+                // Fetch real-time ground baseline pressure via Open-Meteo
+                val location = app.gnssEngine.lastKnownLocation
+                if (location != null && location.latitude != 0.0 && location.longitude != 0.0) {
+                    val baseline = weatherRepository.fetchSurfacePressureHpa(
+                        location.latitude,
+                        location.longitude
+                    )
+                    if (baseline != null) {
+                        app.barometerEngine.updateBaselinePressure(baseline)
+                    }
+                }
+
                 app.dispatchManager.triggerEmergencyDispatch("FOREGROUND_SERVICE_ACTION")
             } catch (e: Exception) {
                 Log.e(TAG, "Emergency workflow failed during dispatch execution", e)
