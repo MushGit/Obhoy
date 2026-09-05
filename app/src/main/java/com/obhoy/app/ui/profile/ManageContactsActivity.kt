@@ -55,8 +55,8 @@ class ManageContactsActivity : AppCompatActivity() {
     }
 
     private fun addContact() {
-        val name = binding.etContactName.text?.toString()?.trim().orEmpty()
-        val phone = binding.etContactPhone.text?.toString()?.trim().orEmpty()
+        val name = binding.etContactName.text.toString().trim()
+        val phone = binding.etContactPhone.text.toString().trim()
 
         if (name.isEmpty() || phone.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
@@ -65,13 +65,21 @@ class ManageContactsActivity : AppCompatActivity() {
 
         val app = application as ObhoyApplication
         lifecycleScope.launch {
+            val currentCount = withContext(Dispatchers.IO) {
+                app.database.emergencyContactDao().getAllContacts().size
+            }
+            
             withContext(Dispatchers.IO) {
                 app.database.emergencyContactDao().insertContact(
-                    EmergencyContactEntity(name = name, phoneNumber = phone)
+                    EmergencyContactEntity(
+                        name = name,
+                        phoneNumber = phone,
+                        priorityOrder = currentCount + 1
+                    )
                 )
             }
-            binding.etContactName.text?.clear()
-            binding.etContactPhone.text?.clear()
+            binding.etContactName.setText("")
+            binding.etContactPhone.setText("")
             Toast.makeText(this@ManageContactsActivity, "Contact added", Toast.LENGTH_SHORT).show()
             loadContacts()
         }
@@ -109,7 +117,7 @@ class ManageContactsActivity : AppCompatActivity() {
             holder.binding.run {
                 tvContactName.text = contact.name
                 tvContactPhone.text = contact.phoneNumber
-                btnDeleteContact.setOnClickListener {
+                root.setOnClickListener {
                     onDeleteClick(contact)
                 }
             }
