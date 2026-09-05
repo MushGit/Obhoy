@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.databinding.ActivityActiveEscortBinding
@@ -32,7 +33,7 @@ class ActiveEscortActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate()
+        super.onCreate(savedInstanceState)
         binding = ActivityActiveEscortBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -83,11 +84,11 @@ class ActiveEscortActivity : AppCompatActivity() {
                         }
                         startService(cancelIntent)
 
-                        // Trigger silent dispatch
+                        // Trigger silent dispatch safely across API levels
                         val sosIntent = Intent(this@ActiveEscortActivity, ObhoyForegroundService::class.java).apply {
                             action = ObhoyForegroundService.ACTION_TRIGGER_EMERGENCY
                         }
-                        startForegroundService(sosIntent)
+                        ContextCompat.startForegroundService(this@ActiveEscortActivity, sosIntent)
 
                         // Redirect to decoy landing
                         startActivity(Intent(this@ActiveEscortActivity, DecoySafeActivity::class.java))
@@ -109,4 +110,3 @@ class ActiveEscortActivity : AppCompatActivity() {
         binding.tvTimerCountdown.text = String.format("%02d:%02d", minutes, seconds)
     }
 }
-
