@@ -1,6 +1,5 @@
 package com.obhoy.app.ui.onboarding
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,10 +7,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.obhoy.app.ObhoyApplication
+import com.obhoy.app.R
 import com.obhoy.app.databinding.FragmentPinSetupBinding
 import com.obhoy.app.engine.PinVerificationEngine
-import com.obhoy.app.ui.profile.ProfileActivity
 import kotlinx.coroutines.launch
 
 class PinSetupFragment : Fragment() {
@@ -87,8 +87,8 @@ class PinSetupFragment : Fragment() {
 
             Toast.makeText(requireContext(), "Obhoy setup complete!", Toast.LENGTH_SHORT).show()
 
-            // Complete registration by opening the main ProfileActivity
-            startActivity(Intent(requireContext(), ProfileActivity::class.java))
+            // Navigate using nav_graph action to trigger popUpTo and close OnboardingActivity
+            findNavController().navigate(R.id.action_pinSetup_to_profileActivity)
             requireActivity().finish()
         }
     }
