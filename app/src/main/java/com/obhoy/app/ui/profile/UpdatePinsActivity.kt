@@ -37,15 +37,15 @@ class UpdatePinsActivity : AppCompatActivity() {
                 app.database.userProfileDao().getUserProfile()
             }
             profile?.let {
-                binding.etSafePin.setText(it.safePin)
-                binding.etDuressPin.setText(it.duressPin)
+                binding.etSafePin.setText(it.primaryPin)
+                binding.etDuressPin.setText(it.stealthPin)
             }
         }
     }
 
     private fun savePins() {
-        val safePin = binding.etSafePin.text?.toString()?.trim().orEmpty()
-        val duressPin = binding.etDuressPin.text?.toString()?.trim().orEmpty()
+        val safePin = binding.etSafePin.text.toString().trim()
+        val duressPin = binding.etDuressPin.text.toString().trim()
 
         if (safePin.length < 4 || duressPin.length < 4) {
             Toast.makeText(this, "PINs must be at least 4 digits", Toast.LENGTH_SHORT).show()
@@ -65,8 +65,8 @@ class UpdatePinsActivity : AppCompatActivity() {
 
             if (currentProfile != null) {
                 val updatedProfile = currentProfile.copy(
-                    safePin = safePin,
-                    duressPin = duressPin
+                    primaryPin = safePin,
+                    stealthPin = duressPin
                 )
                 withContext(Dispatchers.IO) {
                     app.database.userProfileDao().saveUserProfile(updatedProfile)
