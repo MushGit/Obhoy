@@ -8,10 +8,10 @@ import com.obhoy.app.data.local.ObhoyDatabase
 import com.obhoy.app.data.repository.EmergencyContactRepository
 import com.obhoy.app.data.repository.LocationRepository
 import com.obhoy.app.data.repository.UserProfileRepository
-import com.obhoy.app.engine.BarometerElevationEngine
+import com.obhoy.app.sensor.BarometerElevationEngine
 import com.obhoy.app.engine.DispatchManager
-import com.obhoy.app.engine.GnssSatelliteEngine
-import com.obhoy.app.engine.LocationLoggerWorker
+import com.obhoy.app.sensor.GnssSatelliteEngine
+import com.obhoy.app.sensor.LocationLoggerWorker
 import com.obhoy.app.util.CryptoUtils
 import com.obhoy.app.util.NotificationHelper
 import com.obhoy.app.util.SmsDispatcher
