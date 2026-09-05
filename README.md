@@ -62,46 +62,53 @@ Obhoy operates completely locally on-device with **zero external server dependen
 ## Repository Structure
 
 ```
-obhoy/
+Obhoy/
 ├── .github/
 │   └── workflows/
-│       └── android.yml       <-- GitHub Actions CI/CD pipeline
-├── PRIVACY_POLICY.md        <-- Legal privacy policy
-├── TERMS_OF_SERVICE.md      <-- Terms and liability disclaimers
-├── SECURITY.md              <-- Vulnerability reporting rules
-├── README.md                <-- Architecture and project overview
-├── gradle.properties        <-- AndroidX, JVM heap & build performance flags
-├── build.gradle.kts         <-- Root build script
-├── settings.gradle.kts      <-- Dependency repository management & module includes
-└── app/                     <-- Primary Android application module
-    ├── build.gradle.kts     <-- Module dependencies (Room, SQLCipher, WorkManager)
+│       └── android.yml            <-- GitHub Actions CI/CD pipeline
+├── CONTRIBUTING.md                <-- Open-source contribution guidelines & code standards
+├── PRIVACY_POLICY.md              <-- Legal privacy policy
+├── TERMS_OF_SERVICE.md            <-- Terms and liability disclaimers
+├── SECURITY.md                    <-- Vulnerability reporting rules
+├── README.md                      <-- Architecture and project overview
+├── gradle.properties              <-- AndroidX, JVM heap & build performance flags
+├── build.gradle.kts               <-- Root build script
+├── settings.gradle.kts            <-- Dependency repository management & module includes
+└── app/                           <-- Primary Android application module
+    ├── build.gradle.kts           <-- Module dependencies (Room, jBCrypt, WorkManager)
     └── src/main/
-        ├── AndroidManifest.xml
+        ├── AndroidManifest.xml    <-- Service declarations, power triggers, standalone activities
         ├── java/com/obhoy/app/
-        │   ├── ObhoyApplication.kt <-- Central Application class & dependency injection
+        │   ├── ObhoyApplication.kt <-- Central Application class & Room database initialization
         │   ├── data/
         │   │   ├── local/
-        │   │   │   ├── ObhoyDatabase.kt <-- SQLCipher encrypted Room vault
-        │   │   │   ├── dao/             <-- UserProfileDao, EmergencyContactDao, LocationHistoryDao
-        │   │   │   └── entity/          <-- UserProfileEntity, EmergencyContactEntity, LocationHistoryEntity
-        │   │   └── repository/          <-- Synchronous (*Sync) & suspend Repository implementations
+        │   │   │   ├── ObhoyDatabase.kt <-- Local Room database vault
+        │   │   │   ├── dao/             <-- UserProfileDao, EmergencyContactDao
+        │   │   │   └── entity/          <-- UserProfileEntity, EmergencyContactEntity
+        │   │   └── repository/          <-- Data source abstractions
+        │   ├── security/
+        │   │   └── PinVerificationEngine.kt <-- BCrypt hashing & duress PIN validation
         │   ├── service/
-        │   │   └── ObhoyForegroundService.kt <-- Persistent foreground worker (Location & Mic types)
+        │   │   └── ObhoyForegroundService.kt <-- Persistent service (Location, Audio, 999 Recording)
         │   ├── receiver/
-        │   │   ├── ScreenToggleReceiver.kt  <-- Quad-click power button trigger listener
-        │   │   └── BootReceiver.kt          <-- BOOT_COMPLETED service & WorkManager restarter
+        │   │   ├── ScreenToggleReceiver.kt  <-- 4x Power button press hardware detector
+        │   │   └── BootReceiver.kt          <-- Service restart on device boot
         │   ├── sensor/
-        │   │   ├── GnssSatelliteEngine.kt   <-- Raw GNSS & satellite positioning engine
-        │   │   └── BarometerElevationEngine.kt <-- Barometric pressure & floor level estimator
+        │   │   ├── GnssSatelliteEngine.kt   <-- Offline raw GNSS satellite location engine
+        │   │   └── BarometerElevationEngine.kt <-- Atmospheric pressure & vertical floor estimator
         │   ├── engine/
-        │   │   ├── DispatchManager.kt      <-- Emergency alert pipeline orchestrator
-        │   │   ├── LocationLoggerWorker.kt <-- WorkManager periodic location task
+        │   │   ├── DispatchManager.kt      <-- SOS dispatch & 999 trigger orchestrator
         │   │   └── SmsPayloadCompiler.kt   <-- Location URL & floor payload formatter
         │   ├── util/
         │   │   └── SmsDispatcher.kt        <-- Multipart SMS execution engine
-        │   └── ui/                         <-- Onboarding, Active Escort, Dual-PIN Decoy views
-        └── res/                            <-- Dynamic assets, strings, layouts, accessibility XML
----
+        │   └── ui/                         <-- Application UI & stealth components
+        │       ├── profile/
+        │       │   ├── ProfileActivity.kt        <-- Primary profile & dashboard view
+        │       │   ├── ManageContactsActivity.kt <-- Emergency contact management & priority ordering
+        │       │   └── UpdatePinsActivity.kt     <-- Safe/Duress PIN hashing & update screen
+        │       └── notes/                        <-- Covert "Fake Notes" stealth UI disguise
+        └── res/                            <-- XML layouts, navigation drawer graph, values, drawables
+
 ```
 ## Prerequisites & Installation
 ​Android Hardware Requirements
