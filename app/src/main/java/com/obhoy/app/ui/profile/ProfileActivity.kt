@@ -20,7 +20,6 @@ import com.obhoy.app.databinding.ItemContactBinding
 import com.obhoy.app.service.ActiveEscortTimerService
 import com.obhoy.app.service.ObhoyForegroundService
 import com.obhoy.app.ui.escort.ActiveEscortActivity
-import com.obhoy.app.ui.onboarding.OnboardingActivity
 import kotlinx.coroutines.launch
 
 class ProfileActivity : AppCompatActivity() {
@@ -45,16 +44,10 @@ class ProfileActivity : AppCompatActivity() {
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_manage_contacts -> {
-                    val intent = Intent(this, OnboardingActivity::class.java).apply {
-                        putExtra("NAVIGATE_TO", "CONTACTS")
-                    }
-                    startActivity(intent)
+                    startActivity(Intent(this, ManageContactsActivity::class.java))
                 }
                 R.id.nav_update_pins -> {
-                    val intent = Intent(this, OnboardingActivity::class.java).apply {
-                        putExtra("NAVIGATE_TO", "PINS")
-                    }
-                    startActivity(intent)
+                    startActivity(Intent(this, UpdatePinsActivity::class.java))
                 }
                 R.id.nav_hardware_settings -> {
                     startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -128,7 +121,6 @@ class ProfileActivity : AppCompatActivity() {
             val contact = contactsList[position]
             // Map Entity fields to item_contact.xml layout views
             holder.binding.run {
-                // Modify these view IDs if item_contact.xml uses different names
                 tvContactName.text = contact.name
                 tvContactPhone.text = contact.phoneNumber
             }
