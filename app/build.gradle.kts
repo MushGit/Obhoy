@@ -61,6 +61,7 @@ dependencies {
     // Security, Hashing & Cryptography
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("at.favre.lib:bcrypt:0.10.2")
+    implementation("org.mindrot:jbcrypt:0.4")
 
     // Hardware Telemetry & Play Services
     implementation("com.google.android.gms:play-services-location:21.1.0")
