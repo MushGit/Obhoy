@@ -59,54 +59,56 @@ class ActiveEscortActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        binding.btnDisarm.setOnClickListener {
-            val enteredPin = binding.etPinInput.text.toString().trim()
+        val handleDisarm: () -> Unit = {
+            val enteredPin = binding.etCheckinPin.text.toString().trim()
             if (enteredPin.isEmpty()) {
                 Toast.makeText(this, "Enter PIN", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            lifecycleScope.launch {
-                when (pinEngine.verifyPin(enteredPin)) {
-                    is PinVerificationResult.TruePinSuccess -> {
-                        // Stop timer and close
-                        val cancelIntent = Intent(this@ActiveEscortActivity, ActiveEscortTimerService::class.java).apply {
-                            action = ActiveEscortTimerService.ACTION_CANCEL_TIMER
+            } else {
+                lifecycleScope.launch {
+                    when (pinEngine.verifyPin(enteredPin)) {
+                        is PinVerificationResult.TruePinSuccess -> {
+                            // Stop timer and close
+                            val cancelIntent = Intent(this@ActiveEscortActivity, ActiveEscortTimerService::class.java).apply {
+                                action = ActiveEscortTimerService.ACTION_CANCEL_TIMER
+                            }
+                            startService(cancelIntent)
+                            Toast.makeText(this@ActiveEscortActivity, "Disarmed safely", Toast.LENGTH_SHORT).show()
+                            finish()
                         }
-                        startService(cancelIntent)
-                        Toast.makeText(this@ActiveEscortActivity, "Disarmed safely", Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
-                    is PinVerificationResult.DecoyPinSuccess -> {
-                        // Coercion Defense: Stop timer visually, launch believable "Safe" screen, BUT trigger background SOS silently
-                        val cancelIntent = Intent(this@ActiveEscortActivity, ActiveEscortTimerService::class.java).apply {
-                            action = ActiveEscortTimerService.ACTION_CANCEL_TIMER
-                        }
-                        startService(cancelIntent)
+                        is PinVerificationResult.DecoyPinSuccess -> {
+                            // Coercion Defense: Stop timer visually, launch believable "Safe" screen, BUT trigger background SOS silently
+                            val cancelIntent = Intent(this@ActiveEscortActivity, ActiveEscortTimerService::class.java).apply {
+                                action = ActiveEscortTimerService.ACTION_CANCEL_TIMER
+                            }
+                            startService(cancelIntent)
 
-                        // Trigger silent dispatch safely across API levels
-                        val sosIntent = Intent(this@ActiveEscortActivity, ObhoyForegroundService::class.java).apply {
-                            action = ObhoyForegroundService.ACTION_TRIGGER_EMERGENCY
-                        }
-                        ContextCompat.startForegroundService(this@ActiveEscortActivity, sosIntent)
+                            // Trigger silent dispatch safely across API levels
+                            val sosIntent = Intent(this@ActiveEscortActivity, ObhoyForegroundService::class.java).apply {
+                                action = ObhoyForegroundService.ACTION_TRIGGER_EMERGENCY
+                            }
+                            ContextCompat.startForegroundService(this@ActiveEscortActivity, sosIntent)
 
-                        // Redirect to decoy landing
-                        startActivity(Intent(this@ActiveEscortActivity, DecoySafeActivity::class.java))
-                        finish()
-                    }
-                    is PinVerificationResult.InvalidPin -> {
-                        Toast.makeText(this@ActiveEscortActivity, "Invalid PIN", Toast.LENGTH_SHORT).show()
-                        binding.etPinInput.text?.clear()
+                            // Redirect to decoy landing
+                            startActivity(Intent(this@ActiveEscortActivity, DecoySafeActivity::class.java))
+                            finish()
+                        }
+                        is PinVerificationResult.InvalidPin -> {
+                            Toast.makeText(this@ActiveEscortActivity, "Invalid PIN", Toast.LENGTH_SHORT).show()
+                            binding.etCheckinPin.text?.clear()
+                        }
                     }
                 }
             }
         }
+
+        binding.btnCheckIn.setOnClickListener { handleDisarm() }
+        binding.btnStopEscort.setOnClickListener { handleDisarm() }
     }
 
     private fun updateTimerUi(millisRemaining: Long) {
         val totalSeconds = millisRemaining / 1000
         val minutes = totalSeconds / 60
         val seconds = totalSeconds % 60
-        binding.tvTimerCountdown.text = String.format("%02d:%02d", minutes, seconds)
+        binding.tvCountdownTimer.text = String.format("%02d:%02d", minutes, seconds)
     }
 }
