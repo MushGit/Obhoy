@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_manage_contacts"
+            android:icon="@android:drawable/ic_menu_call"
+            android:title="Manage Emergency Contacts" />
+        <item
+            android:id="@+id/nav_update_pins"
+            android:icon="@android:drawable/ic_lock_lock"
+            android:title="Update Primary &amp; Decoy PINs" />
+        <item
+            android:id="@+id/nav_hardware_settings"
+            android:icon="@android:drawable/ic_menu_preferences"
+            android:title="Hardware Trigger Settings" />
+    </group>
+</menu>
