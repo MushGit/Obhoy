@@ -12,18 +12,18 @@
         android:label="Profile Setup"
         tools:layout="@layout/fragment_profile_setup">
         <action
-            android:id="@+id/action_profileSetup_to_contactManagement"
-            app:destination="@id/contactManagementFragment" />
+            android:id="@+id/action_profileSetup_to_contactsSetup"
+            app:destination="@id/contactsSetupFragment" />
     </fragment>
 
     <!-- Step 2: Emergency Contact Management Fragment -->
     <fragment
-        android:id="@+id/contactManagementFragment"
-        android:name="com.obhoy.app.ui.onboarding.ContactManagementFragment"
-        android:label="Contact Management"
+        android:id="@+id/contactsSetupFragment"
+        android:name="com.obhoy.app.ui.onboarding.ContactsSetupFragment"
+        android:label="Contact Setup"
         tools:layout="@layout/fragment_contact_management">
         <action
-            android:id="@+id/action_contactManagement_to_pinSetup"
+            android:id="@+id/action_contactsSetup_to_pinSetup"
             app:destination="@id/pinSetupFragment" />
     </fragment>
 
