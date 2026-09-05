@@ -89,7 +89,7 @@ class ProfileSetupFragment : Fragment() {
             Toast.makeText(requireContext(), "Profile details saved", Toast.LENGTH_SHORT).show()
             
             // Navigate to Emergency Contacts Setup step
-            findNavController().navigate(R.id.action_profileSetupFragment_to_contactsFragment)
+            findNavController().navigate(R.id.action_profileSetup_to_contactsSetup)
         }
     }
 
