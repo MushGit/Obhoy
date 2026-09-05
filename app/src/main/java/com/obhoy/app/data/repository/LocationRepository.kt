@@ -13,6 +13,10 @@ class LocationRepository(
     private val barometerEngine: BarometerElevationEngine
 ) {
 
+    fun getLatestLocationSync(): LocationHistoryEntity? {
+        return locationHistoryDao.getLatestLocationSync()
+    }
+
     suspend fun logCurrentLocationPoint(): LocationHistoryEntity? = withContext(Dispatchers.IO) {
         val lastLocation = gnssEngine.lastKnownLocation ?: return@withContext null
         val pressure = barometerEngine.currentPressure
@@ -44,4 +48,3 @@ class LocationRepository(
         locationHistoryDao.purgeLocationsOlderThan(cutoffTimestamp)
     }
 }
-
