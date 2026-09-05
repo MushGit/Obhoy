@@ -7,14 +7,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.obhoy.app.ObhoyApplication
+import com.obhoy.app.R
 import com.obhoy.app.data.local.entity.EmergencyContactEntity
-import com.obhoy.app.databinding.FragmentContactsSetupBinding
+import com.obhoy.app.databinding.FragmentContactManagementBinding
 import kotlinx.coroutines.launch
 
 class ContactsSetupFragment : Fragment() {
 
-    private var _binding: FragmentContactsSetupBinding? = null
+    private var _binding: FragmentContactManagementBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -22,7 +24,7 @@ class ContactsSetupFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentContactsSetupBinding.inflate(inflater, container, false)
+        _binding = FragmentContactManagementBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -50,6 +52,10 @@ class ContactsSetupFragment : Fragment() {
 
             saveContact(name, phone)
         }
+
+        binding.btnNextToPin.setOnClickListener {
+            findNavController().navigate(R.id.action_contactsFragment_to_pinSetupFragment)
+        }
     }
 
     private fun saveContact(name: String, phone: String) {
@@ -70,7 +76,6 @@ class ContactsSetupFragment : Fragment() {
 
             app.database.emergencyContactDao().insertContact(newContact)
             
-            // Clear input fields
             binding.etContactName.text?.clear()
             binding.etContactPhone.text?.clear()
 
@@ -84,14 +89,11 @@ class ContactsSetupFragment : Fragment() {
 
         lifecycleScope.launch {
             val contacts = app.database.emergencyContactDao().getAllContacts()
-            
-            // Update UI list or counter indicator
-            binding.tvContactCount.text = "${contacts.size} / 5 Contacts Added"
+            // Optional: attach list to binding.rvContacts adapter once initialized
         }
     }
 
     private fun isValidPhoneNumber(phone: String): Boolean {
-        // Validates standard BD numbers (e.g., +8801700000000 or 01700000000)
         val regex = Regex("^(?:\\+?88)?01[3-9]\\d{8}$")
         return regex.matches(phone)
     }
