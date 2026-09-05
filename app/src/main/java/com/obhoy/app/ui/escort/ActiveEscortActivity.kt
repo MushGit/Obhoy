@@ -49,8 +49,8 @@ class ActiveEscortActivity : AppCompatActivity() {
 
     private fun checkLocationPermissions() {
         val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.POST_NOTIFICATIONS) {
-            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add("android.permission.POST_NOTIFICATIONS")
         }
 
         val missingPermissions = permissions.filter {
