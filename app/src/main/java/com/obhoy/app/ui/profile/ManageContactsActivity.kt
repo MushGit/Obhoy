@@ -68,7 +68,7 @@ class ManageContactsActivity : AppCompatActivity() {
             val currentCount = withContext(Dispatchers.IO) {
                 app.database.emergencyContactDao().getAllContacts().size
             }
-            
+
             withContext(Dispatchers.IO) {
                 app.database.emergencyContactDao().insertContact(
                     EmergencyContactEntity(
@@ -96,12 +96,12 @@ class ManageContactsActivity : AppCompatActivity() {
         }
     }
 
-    private class ContactsAdapter(
+    private inner class ContactsAdapter(
         private val contactsList: List<EmergencyContactEntity>,
         private val onDeleteClick: (EmergencyContactEntity) -> Unit
     ) : RecyclerView.Adapter<ContactsAdapter.ViewHolder>() {
 
-        class ViewHolder(val binding: ItemContactBinding) : RecyclerView.ViewHolder(binding.root)
+        inner class ViewHolder(val binding: ItemContactBinding) : RecyclerView.ViewHolder(binding.root)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val binding = ItemContactBinding.inflate(
