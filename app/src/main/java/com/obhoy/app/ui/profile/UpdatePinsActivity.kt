@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.databinding.ActivityUpdatePinsBinding
+import com.obhoy.app.security.PinVerificationEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -13,6 +14,7 @@ import kotlinx.coroutines.withContext
 class UpdatePinsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUpdatePinsBinding
+    private val pinEngine = PinVerificationEngine()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,33 +28,18 @@ class UpdatePinsActivity : AppCompatActivity() {
         binding.btnSavePins.setOnClickListener {
             savePins()
         }
-
-        loadUserPins()
-    }
-
-    private fun loadUserPins() {
-        val app = application as ObhoyApplication
-        lifecycleScope.launch {
-            val profile = withContext(Dispatchers.IO) {
-                app.database.userProfileDao().getUserProfile()
-            }
-            profile?.let {
-                binding.etSafePin.setText(it.primaryPin)
-                binding.etDuressPin.setText(it.stealthPin)
-            }
-        }
     }
 
     private fun savePins() {
-        val safePin = binding.etSafePin.text.toString().trim()
-        val duressPin = binding.etDuressPin.text.toString().trim()
+        val safePinInput = binding.etSafePin.text.toString().trim()
+        val duressPinInput = binding.etDuressPin.text.toString().trim()
 
-        if (safePin.length < 4 || duressPin.length < 4) {
+        if (safePinInput.length < 4 || duressPinInput.length < 4) {
             Toast.makeText(this, "PINs must be at least 4 digits", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (safePin == duressPin) {
+        if (safePinInput == duressPinInput) {
             Toast.makeText(this, "Safe PIN and Duress PIN cannot be identical", Toast.LENGTH_SHORT).show()
             return
         }
@@ -64,10 +51,14 @@ class UpdatePinsActivity : AppCompatActivity() {
             }
 
             if (currentProfile != null) {
+                val hashedTruePin = pinEngine.hashPin(safePinInput)
+                val hashedDecoyPin = pinEngine.hashPin(duressPinInput)
+
                 val updatedProfile = currentProfile.copy(
-                    primaryPin = safePin,
-                    stealthPin = duressPin
+                    truePinHash = hashedTruePin,
+                    decoyPinHash = hashedDecoyPin
                 )
+
                 withContext(Dispatchers.IO) {
                     app.database.userProfileDao().saveUserProfile(updatedProfile)
                 }
