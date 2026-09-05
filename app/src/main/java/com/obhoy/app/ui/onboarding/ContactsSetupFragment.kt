@@ -60,7 +60,7 @@ class ContactsSetupFragment : Fragment() {
                 if (contacts.isEmpty()) {
                     Toast.makeText(requireContext(), "Add at least one emergency contact to proceed", Toast.LENGTH_SHORT).show()
                 } else {
-                    findNavController().navigate(R.id.action_contactsFragment_to_pinSetupFragment)
+                    findNavController().navigate(R.id.action_contactsSetup_to_pinSetup)
                 }
             }
         }
