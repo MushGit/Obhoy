@@ -43,6 +43,9 @@ class ObhoyForegroundService : Service() {
             ACTION_TRIGGER_EMERGENCY, ACTION_TRIGGER_SOS -> {
                 executeEmergencyWorkflow()
             }
+            ACTION_START_MONITORING -> {
+                // Background hardware status active
+            }
         }
         return START_STICKY
     }
@@ -55,7 +58,7 @@ class ObhoyForegroundService : Service() {
                 addAction(Intent.ACTION_SCREEN_ON)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(screenToggleReceiver, filter, RECEIVER_NOT_EXPORTED)
+                registerReceiver(screenToggleReceiver, filter, RECEIVER_EXPORTED)
             } else {
                 registerReceiver(screenToggleReceiver, filter)
             }
@@ -149,6 +152,7 @@ class ObhoyForegroundService : Service() {
     companion object {
         const val CHANNEL_ID = "obhoy_service_channel"
         const val NOTIFICATION_ID = 1001
+        const val ACTION_START_MONITORING = "com.obhoy.app.ACTION_START_MONITORING"
         const val ACTION_TRIGGER_EMERGENCY = "com.obhoy.app.ACTION_TRIGGER_EMERGENCY"
         const val ACTION_TRIGGER_SOS = "com.obhoy.app.TRIGGER_SOS"
     }
