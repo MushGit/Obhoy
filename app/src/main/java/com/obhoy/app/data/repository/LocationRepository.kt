@@ -14,6 +14,21 @@ class LocationRepository(
 ) {
 
     fun getLatestLocationSync(): LocationHistoryEntity? {
+        // 1. Direct memory check from live GNSS Engine
+        val liveLocation = gnssEngine.lastKnownLocation
+        if (liveLocation != null && liveLocation.latitude != 0.0 && liveLocation.longitude != 0.0) {
+            return LocationHistoryEntity(
+                latitude = liveLocation.latitude,
+                longitude = liveLocation.longitude,
+                altitudeMeters = liveLocation.altitude,
+                pressureHpa = barometerEngine.currentPressure,
+                floorEstimate = barometerEngine.getEstimatedFloor(),
+                accuracyMeters = liveLocation.accuracy,
+                timestamp = liveLocation.time
+            )
+        }
+
+        // 2. Fallback to cached point from Room DB
         return locationHistoryDao.getLatestLocationSync()
     }
 
@@ -37,7 +52,7 @@ class LocationRepository(
     }
 
     suspend fun getLatestLocation(): LocationHistoryEntity? = withContext(Dispatchers.IO) {
-        locationHistoryDao.getLatestLocation()
+        getLatestLocationSync() ?: locationHistoryDao.getLatestLocation()
     }
 
     suspend fun getLocationTrailSince(sinceTimestamp: Long): List<LocationHistoryEntity> = withContext(Dispatchers.IO) {
