@@ -89,7 +89,7 @@ class ManageContactsActivity : AppCompatActivity() {
         val app = application as ObhoyApplication
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                app.database.emergencyContactDao().deleteContact(contact)
+                app.database.emergencyContactDao().deleteContactById(contact.id)
             }
             Toast.makeText(this@ManageContactsActivity, "Contact removed", Toast.LENGTH_SHORT).show()
             loadContacts()
