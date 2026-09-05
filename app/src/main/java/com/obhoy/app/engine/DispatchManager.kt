@@ -72,16 +72,20 @@ class DispatchManager(
             timestamp = System.currentTimeMillis()
         )
 
-        var deliveredCount = 0
+        var dispatchedCount = 0
         for (contact in contacts) {
-            val success = smsDispatcher.sendEmergencySms(
-                phoneNumber = contact.phoneNumber,
-                message = payload
-            )
-            if (success) deliveredCount++
+            try {
+                smsDispatcher.sendEmergencySms(
+                    phoneNumber = contact.phoneNumber,
+                    messageText = payload
+                )
+                dispatchedCount++
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send SMS to ${contact.phoneNumber}", e)
+            }
         }
 
-        Log.i(TAG, "Dispatch sequence complete. Sent $deliveredCount/${contacts.size} messages.")
+        Log.i(TAG, "Dispatch sequence complete. Sent $dispatchedCount/${contacts.size} messages.")
     }
 
     companion object {
