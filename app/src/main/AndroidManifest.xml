@@ -58,6 +58,18 @@
             android:name=".ui.profile.ProfileActivity"
             android:exported="false" />
 
+        <!-- Manage Emergency Contacts Activity -->
+        <activity
+            android:name=".ui.profile.ManageContactsActivity"
+            android:exported="false"
+            android:label="Manage Contacts" />
+
+        <!-- Update Security PINs Activity -->
+        <activity
+            android:name=".ui.profile.UpdatePinsActivity"
+            android:exported="false"
+            android:label="Update Security PINs" />
+
         <!-- Active Escort Countdown Screen -->
         <activity
             android:name=".ui.escort.ActiveEscortActivity"
