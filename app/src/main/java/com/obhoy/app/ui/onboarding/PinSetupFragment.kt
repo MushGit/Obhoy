@@ -1,5 +1,6 @@
 package com.obhoy.app.ui.onboarding
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.databinding.FragmentPinSetupBinding
 import com.obhoy.app.engine.PinVerificationEngine
+import com.obhoy.app.ui.profile.ProfileActivity
 import kotlinx.coroutines.launch
 
 class PinSetupFragment : Fragment() {
@@ -77,12 +79,17 @@ class PinSetupFragment : Fragment() {
 
             val updatedProfile = existingProfile.copy(
                 truePinHash = trueHash,
-                decoyPinHash = decoyHash
+                decoyPinHash = decoyHash,
+                isSetupComplete = true
             )
 
             app.database.userProfileDao().saveUserProfile(updatedProfile)
 
-            Toast.makeText(requireContext(), "Security PINs registered successfully", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Obhoy setup complete!", Toast.LENGTH_SHORT).show()
+
+            // Complete registration by opening the main ProfileActivity
+            startActivity(Intent(requireContext(), ProfileActivity::class.java))
+            requireActivity().finish()
         }
     }
 
@@ -91,4 +98,3 @@ class PinSetupFragment : Fragment() {
         _binding = null
     }
 }
-
