@@ -15,26 +15,34 @@ class PinVerificationEngine @Inject constructor(
 ) {
 
     suspend fun verifyPin(enteredPin: String): PinVerificationResult {
+        if (enteredPin.isBlank()) return PinVerificationResult.InvalidPin
+
         val profile = userProfileDao.getUserProfile() ?: return PinVerificationResult.InvalidPin
 
         // Verify True PIN
-        val trueResult = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.truePinHash)
-        if (trueResult.verified) {
-            return PinVerificationResult.TruePinSuccess
+        if (!profile.truePinHash.isNullOrBlank()) {
+            val trueResult = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.truePinHash)
+            if (trueResult.verified) {
+                return PinVerificationResult.TruePinSuccess
+            }
         }
 
         // Verify Decoy PIN
-        val decoyResult = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.decoyPinHash)
-        if (decoyResult.verified) {
-            return PinVerificationResult.DecoyPinSuccess
+        if (!profile.decoyPinHash.isNullOrBlank()) {
+            val decoyResult = BCrypt.verifyer().verify(enteredPin.toCharArray(), profile.decoyPinHash)
+            if (decoyResult.verified) {
+                return PinVerificationResult.DecoyPinSuccess
+            }
         }
 
         return PinVerificationResult.InvalidPin
     }
 
     companion object {
+        private const val BCRYPT_COST = 12
+
         fun hashPin(pin: String): String {
-            return BCrypt.withDefaults().hashToString(12, pin.toCharArray())
+            return BCrypt.withDefaults().hashToString(BCRYPT_COST, pin.toCharArray())
         }
     }
 }
