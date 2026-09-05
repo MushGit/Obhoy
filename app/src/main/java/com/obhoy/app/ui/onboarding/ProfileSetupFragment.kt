@@ -7,7 +7,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.obhoy.app.ObhoyApplication
+import com.obhoy.app.R
 import com.obhoy.app.data.local.entity.UserProfileEntity
 import com.obhoy.app.databinding.FragmentProfileSetupBinding
 import kotlinx.coroutines.launch
@@ -85,6 +87,9 @@ class ProfileSetupFragment : Fragment() {
             app.database.userProfileDao().saveUserProfile(updatedProfile)
 
             Toast.makeText(requireContext(), "Profile details saved", Toast.LENGTH_SHORT).show()
+            
+            // Navigate to Emergency Contacts Setup step
+            findNavController().navigate(R.id.action_profileSetupFragment_to_contactsFragment)
         }
     }
 
@@ -98,4 +103,3 @@ class ProfileSetupFragment : Fragment() {
         _binding = null
     }
 }
-
