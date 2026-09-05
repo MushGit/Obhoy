@@ -1,13 +1,16 @@
 package com.obhoy.app.ui.escort
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.obhoy.app.ObhoyApplication
@@ -40,7 +43,23 @@ class ActiveEscortActivity : AppCompatActivity() {
         val app = application as ObhoyApplication
         pinEngine = PinVerificationEngine(app.database.userProfileDao())
 
+        checkLocationPermissions()
         setupClickListeners()
+    }
+
+    private fun checkLocationPermissions() {
+        val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.POST_NOTIFICATIONS) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val missingPermissions = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (missingPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missingPermissions.toTypedArray(), 101)
+        }
     }
 
     override fun onResume() {
@@ -67,7 +86,6 @@ class ActiveEscortActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     when (pinEngine.verifyPin(enteredPin)) {
                         is PinVerificationResult.TruePinSuccess -> {
-                            // Stop timer and close
                             val cancelIntent = Intent(this@ActiveEscortActivity, ActiveEscortTimerService::class.java).apply {
                                 action = ActiveEscortTimerService.ACTION_CANCEL_TIMER
                             }
@@ -76,19 +94,16 @@ class ActiveEscortActivity : AppCompatActivity() {
                             finish()
                         }
                         is PinVerificationResult.DecoyPinSuccess -> {
-                            // Coercion Defense: Stop timer visually, launch believable "Safe" screen, BUT trigger background SOS silently
                             val cancelIntent = Intent(this@ActiveEscortActivity, ActiveEscortTimerService::class.java).apply {
                                 action = ActiveEscortTimerService.ACTION_CANCEL_TIMER
                             }
                             startService(cancelIntent)
 
-                            // Trigger silent dispatch safely across API levels
                             val sosIntent = Intent(this@ActiveEscortActivity, ObhoyForegroundService::class.java).apply {
                                 action = ObhoyForegroundService.ACTION_TRIGGER_EMERGENCY
                             }
                             ContextCompat.startForegroundService(this@ActiveEscortActivity, sosIntent)
 
-                            // Redirect to decoy landing
                             startActivity(Intent(this@ActiveEscortActivity, DecoySafeActivity::class.java))
                             finish()
                         }
