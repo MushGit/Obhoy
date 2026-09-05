@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.obhoy.app.databinding.ActivityProfileBinding
 import com.obhoy.app.service.ActiveEscortTimerService
 import com.obhoy.app.ui.escort.ActiveEscortActivity
@@ -13,7 +14,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProfileBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate()
+        super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -27,10 +28,9 @@ class ProfileActivity : AppCompatActivity() {
                 action = ActiveEscortTimerService.ACTION_START_TIMER
                 putExtra(ActiveEscortTimerService.EXTRA_DURATION_MINUTES, 15) // Default 15 mins
             }
-            startForegroundService(startEscortIntent)
+            ContextCompat.startForegroundService(this, startEscortIntent)
 
             startActivity(Intent(this, ActiveEscortActivity::class.java))
         }
     }
 }
-
