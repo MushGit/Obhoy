@@ -13,6 +13,9 @@ interface LocationHistoryDao {
     suspend fun insertLocationPoint(locationPoint: LocationHistoryEntity)
 
     @Query("SELECT * FROM location_history ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestLocationSync(): LocationHistoryEntity?
+
+    @Query("SELECT * FROM location_history ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLatestLocation(): LocationHistoryEntity?
 
     @Query("SELECT * FROM location_history WHERE timestamp >= :sinceTimestamp ORDER BY timestamp ASC")
@@ -24,4 +27,3 @@ interface LocationHistoryDao {
     @Query("DELETE FROM location_history")
     suspend fun clearHistory()
 }
-
