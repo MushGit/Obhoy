@@ -3,15 +3,20 @@ package com.obhoy.app.ui.profile
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.view.LayoutInflater
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.R
+import com.obhoy.app.data.local.entity.EmergencyContactEntity
 import com.obhoy.app.databinding.ActivityProfileBinding
+import com.obhoy.app.databinding.ItemContactBinding
 import com.obhoy.app.service.ActiveEscortTimerService
 import com.obhoy.app.service.ObhoyForegroundService
 import com.obhoy.app.ui.escort.ActiveEscortActivity
@@ -88,8 +93,7 @@ class ProfileActivity : AppCompatActivity() {
         binding.rvDashboardContacts.layoutManager = LinearLayoutManager(this)
 
         lifecycleScope.launch {
-            val profile = app.database.userProfileDao().getUserProfile()
-            val contacts = profile?.emergencyContacts ?: emptyList()
+            val contacts = app.database.emergencyContactDao().getAllContacts()
 
             if (contacts.isEmpty()) {
                 Toast.makeText(
@@ -98,9 +102,38 @@ class ProfileActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
-                // Attach contacts adapter to populated list
-                // binding.rvDashboardContacts.adapter = ContactsAdapter(contacts)
+                binding.rvDashboardContacts.adapter = DashboardContactsAdapter(contacts)
             }
         }
+    }
+
+    // Lightweight Inner Adapter to render contacts list
+    private class DashboardContactsAdapter(
+        private val contactsList: List<EmergencyContactEntity>
+    ) : RecyclerView.Adapter<DashboardContactsAdapter.ContactViewHolder>() {
+
+        class ContactViewHolder(val binding: ItemContactBinding) :
+            RecyclerView.ViewHolder(binding.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactViewHolder {
+            val binding = ItemContactBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            return ContactViewHolder(binding)
+        }
+
+        override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
+            val contact = contactsList[position]
+            // Map Entity fields to item_contact.xml layout views
+            holder.binding.run {
+                // Modify these view IDs if item_contact.xml uses different names
+                tvContactName.text = contact.name
+                tvContactPhone.text = contact.phoneNumber
+            }
+        }
+
+        override fun getItemCount(): Int = contactsList.size
     }
 }
