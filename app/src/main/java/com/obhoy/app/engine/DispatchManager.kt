@@ -2,15 +2,19 @@ package com.obhoy.app.engine
 
 import android.content.Context
 import android.util.Log
+import com.obhoy.app.ObhoyApplication
 import com.obhoy.app.data.repository.EmergencyContactRepository
 import com.obhoy.app.data.repository.LocationRepository
 import com.obhoy.app.data.repository.UserProfileRepository
+import com.obhoy.app.data.repository.WeatherRepository
 import com.obhoy.app.util.SmsDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class DispatchManager(
     private val context: Context,
@@ -21,6 +25,7 @@ class DispatchManager(
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val weatherRepository = WeatherRepository()
 
     /**
      * Entry point triggered asynchronously by receivers or accessibility service.
@@ -28,10 +33,23 @@ class DispatchManager(
     fun triggerEmergencyDispatch(triggerType: String = "HARDWARE_POWER_TOGGLE") {
         scope.launch {
             try {
-                val lastKnownLocation = locationRepository.getLatestLocationSync()
-                val lat = lastKnownLocation?.latitude ?: 0.0
-                val lng = lastKnownLocation?.longitude ?: 0.0
-                val floor = lastKnownLocation?.floorEstimate ?: "Ground"
+                val app = context.applicationContext as ObhoyApplication
+
+                // 1. Wait up to 3 seconds for a non-zero GPS fix
+                val validLocation = awaitValidLocation()
+                val lat = validLocation?.latitude ?: 0.0
+                val lng = validLocation?.longitude ?: 0.0
+
+                // 2. Fetch real-time weather pressure baseline using valid coordinates
+                if (lat != 0.0 && lng != 0.0) {
+                    val baseline = weatherRepository.fetchSurfacePressureHpa(lat, lng)
+                    if (baseline != null) {
+                        app.barometerEngine.updateBaselinePressure(baseline)
+                    }
+                }
+
+                // 3. Compute accurate floor after pressure baseline update
+                val floor = app.barometerEngine.getEstimatedFloor()
 
                 executeSmsDispatch(
                     latitude = lat,
@@ -42,6 +60,20 @@ class DispatchManager(
                 Log.e(TAG, "Failed to execute background emergency dispatch trigger", e)
             }
         }
+    }
+
+    /**
+     * Polls LocationRepository for up to 3000ms until valid coordinates arrive.
+     */
+    private suspend fun awaitValidLocation() = withTimeoutOrNull(3000L) {
+        while (true) {
+            val location = locationRepository.getLatestLocationSync()
+            if (location != null && location.latitude != 0.0 && location.longitude != 0.0) {
+                return@withTimeoutOrNull location
+            }
+            delay(200L)
+        }
+        null
     }
 
     /**
