@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.obhoy.app.ObhoyApplication
@@ -78,15 +79,16 @@ class ObhoyForegroundService : Service() {
 
     private fun executeEmergencyWorkflow() {
         serviceScope.launch {
-            val app = application as ObhoyApplication
-            app.dispatchManager.triggerEmergencyDispatch("FOREGROUND_SERVICE_ACTION")
+            try {
+                Log.d(TAG, "Initiating emergency dispatch workflow...")
+                val app = application as ObhoyApplication
+                app.dispatchManager.triggerEmergencyDispatch("FOREGROUND_SERVICE_ACTION")
+            } catch (e: Exception) {
+                Log.e(TAG, "Emergency workflow failed during dispatch execution", e)
+            }
         }
     }
 
-    /**
-     * Handles API 34+ (Android 14) foreground service startup constraints without throwing
-     * ForegroundServiceStartNotAllowedException or SecurityException.
-     */
     private fun promoteToForegroundSafely() {
         val notification = createNotification()
 
@@ -110,7 +112,7 @@ class ObhoyForegroundService : Service() {
                 startForeground(NOTIFICATION_ID, notification)
             }
         } catch (e: SecurityException) {
-            // Fallback for security exceptions during background promotion
+            Log.e(TAG, "SecurityException during foreground promotion", e)
             startForeground(NOTIFICATION_ID, notification)
         }
     }
@@ -150,6 +152,7 @@ class ObhoyForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private const val TAG = "ObhoyForegroundService"
         const val CHANNEL_ID = "obhoy_service_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_START_MONITORING = "com.obhoy.app.ACTION_START_MONITORING"
