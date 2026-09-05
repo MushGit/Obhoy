@@ -47,4 +47,18 @@
         android:label="Obhoy Control Center"
         tools:layout="@layout/activity_profile" />
 
+    <!-- Destination: Dedicated Manage Contacts Activity -->
+    <activity
+        android:id="@+id/manageContactsActivity"
+        android:name="com.obhoy.app.ui.profile.ManageContactsActivity"
+        android:label="Manage Contacts"
+        tools:layout="@layout/activity_manage_contacts" />
+
+    <!-- Destination: Dedicated Update PINs Activity -->
+    <activity
+        android:id="@+id/updatePinsActivity"
+        android:name="com.obhoy.app.ui.profile.UpdatePinsActivity"
+        android:label="Update Security PINs"
+        tools:layout="@layout/activity_update_pins" />
+
 </navigation>
