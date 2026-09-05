@@ -15,5 +15,5 @@ interface UserProfileDao {
     suspend fun saveUserProfile(profile: UserProfileEntity)
 
     @Query("DELETE FROM user_profile")
-    suspend fun clearProfile()
+    suspend fun clearUserProfile()
 }
