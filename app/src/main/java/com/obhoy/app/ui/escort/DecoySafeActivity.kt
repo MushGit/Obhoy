@@ -9,7 +9,7 @@ class DecoySafeActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDecoySafeBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate()
+        super.onCreate(savedInstanceState)
         binding = ActivityDecoySafeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -19,4 +19,3 @@ class DecoySafeActivity : AppCompatActivity() {
         }
     }
 }
-
