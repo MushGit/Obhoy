@@ -34,22 +34,25 @@ class DispatchManager(
             try {
                 val app = context.applicationContext as ObhoyApplication
 
-                // 1. Fetch best available location via GnssSatelliteEngine (wait for fresh fix or fallback)
+                // 1. Fetch best available location via GnssSatelliteEngine
                 var isFallback = false
-                var validLocation: Location? = app.gnssEngine.awaitFreshLocation(timeoutMs = 45_000L)
+                val freshLocation: Location? = app.gnssEngine.awaitFreshLocation(timeoutMs = 45_000L)
 
-                // 2. If live satellite acquisition fails, attempt pulling last saved DB location
-                if (validLocation == null || !isValidCoordinate(validLocation.latitude, validLocation.longitude)) {
-                    validLocation = locationRepository.getLatestLocationSync()
-                    if (validLocation != null && isValidCoordinate(validLocation.latitude, validLocation.longitude)) {
+                var lat: Double? = freshLocation?.latitude
+                var lng: Double? = freshLocation?.longitude
+
+                // 2. If live satellite acquisition fails, fallback to last saved DB location entity
+                if (lat == null || lng == null || !isValidCoordinate(lat, lng)) {
+                    val dbLocationEntity = locationRepository.getLatestLocationSync()
+                    if (dbLocationEntity != null && isValidCoordinate(dbLocationEntity.latitude, dbLocationEntity.longitude)) {
+                        lat = dbLocationEntity.latitude
+                        lng = dbLocationEntity.longitude
                         isFallback = true
                     } else {
-                        validLocation = null
+                        lat = null
+                        lng = null
                     }
                 }
-
-                val lat = validLocation?.latitude
-                val lng = validLocation?.longitude
 
                 // 3. Fetch real-time weather pressure baseline if coordinates are valid
                 if (lat != null && lng != null) {
