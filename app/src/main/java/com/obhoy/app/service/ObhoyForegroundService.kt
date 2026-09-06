@@ -120,8 +120,8 @@ class ObhoyForegroundService : Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Obhoy Protection Active")
-            .setContentText("Hardware monitors operational")
+            .setContentTitle("Device Sync")
+            .setContentText("Background service running")
             .setSmallIcon(R.drawable.obhoy)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
