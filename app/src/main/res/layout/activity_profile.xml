@@ -57,8 +57,7 @@
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:contentDescription="Protection Status Icon"
-                            android:src="@drawable/obhoy"
-                            app:tint="@color/white" />
+                            android:src="@drawable/obhoy" />
 
                         <TextView
                             android:id="@+id/tvStatusText"
