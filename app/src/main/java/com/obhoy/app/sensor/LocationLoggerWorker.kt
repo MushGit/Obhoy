@@ -2,7 +2,10 @@ package com.obhoy.app.sensor
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.location.Location
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -49,7 +52,7 @@ class LocationLoggerWorker(
     }
 
     private fun saveLocationToLocalCache(location: Location) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = getEncryptedPrefs(context)
         prefs.edit().apply {
             putFloat(KEY_LATITUDE, location.latitude.toFloat())
             putFloat(KEY_LONGITUDE, location.longitude.toFloat())
@@ -66,6 +69,28 @@ class LocationLoggerWorker(
         const val KEY_LONGITUDE = "cached_longitude"
         const val KEY_TIMESTAMP = "cached_timestamp"
         const val KEY_ACCURACY = "cached_accuracy"
+
+        /**
+         * Returns the encrypted SharedPreferences instance for the location
+         * cache. IMPORTANT: any other file that previously read this cache
+         * via context.getSharedPreferences(PREFS_NAME, ...) directly must be
+         * updated to call this method instead — a plain getSharedPreferences
+         * call will now return a different, empty, unencrypted preference
+         * file, since the data written here is encrypted under a different
+         * underlying store.
+         */
+        fun getEncryptedPrefs(context: Context): SharedPreferences {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
+            return EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 }
-
