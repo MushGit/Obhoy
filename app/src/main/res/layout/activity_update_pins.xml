@@ -9,7 +9,7 @@
         android:id="@+id/topAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:title="Update Security PINs"
+        android:title="Update PIN"
         app:navigationIcon="?attr/homeAsUpIndicator" />
 
     <LinearLayout
@@ -21,12 +21,33 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Safe PIN (Primary PIN)">
+            android:hint="Current PIN">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etCurrentPin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnVerifyCurrentPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Verify" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:hint="New PIN">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSafePin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:enabled="false"
                 android:inputType="numberPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -34,12 +55,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Duress PIN (Stealth/Decoy PIN)">
+            android:hint="Alternate PIN">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDuressPin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:enabled="false"
                 android:inputType="numberPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -48,7 +70,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Save Security PINs" />
+            android:enabled="false"
+            android:text="Save" />
 
     </LinearLayout>
 
