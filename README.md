@@ -117,6 +117,23 @@ Obhoy/
 ​Telephony: Active SIM card with standard SMS balance
 
 ---
+### A Note on the AccessibilityService Permission
+
+You'll notice Obhoy requests `AccessibilityService` — a permission often associated with 
+spyware and banking trojans, so it's fair to ask why a privacy-first safety app uses it.
+
+Android's built-in hardware SOS trigger requires **5 rapid presses** of the power button. 
+In a genuine emergency — shaking hands, panic, limited time — that fifth press can be the 
+difference between an alert going out and not. Obhoy uses `AccessibilityService` for exactly 
+one narrow purpose: detecting a **4-click pattern within a 1.5-second window**, shaving off 
+that one extra click when it matters most.
+
+This permission is **not** used for screen reading, keylogging, overlay injection, or any 
+form of surveillance. Its entire function is scoped to counting power-button presses. You can 
+verify this yourself — the relevant logic lives in 
+[`ScreenToggleReceiver.kt`](app/src/main/java/com/obhoy/app/receiver/ScreenToggleReceiver.kt), 
+and we welcome anyone auditing it to confirm there's nothing more happening under the hood.
+---
 
 ## Local Development Setup
 1. Clone the repository: 
