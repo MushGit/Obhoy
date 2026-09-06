@@ -26,7 +26,7 @@
 
     <!-- Active Escort -->
     <string name="title_active_escort">Active Escort Mode</string>
-    <string name="label_countdown_prompt">Enter True PIN to Check-in</string>
+    <string name="label_countdown_prompt">Enter PIN to Check-in</string>
     <string name="btn_checkin">I Am Safe (Check-In)</string>
 
     <!-- Decoy Screen -->
