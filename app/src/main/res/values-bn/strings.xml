@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">অভয়</string>
+
+    <!-- Onboarding & Setup -->
+    <string name="title_profile_setup">ব্যবহারকারীর প্রোফাইল সেটআপ</string>
+    <string name="hint_full_name">পূর্ণ নাম</string>
+    <string name="hint_blood_group">রক্তের গ্রুপ (যেমন, B+)</string>
+    <string name="hint_medical_notes">চিকিৎসা তথ্য / অ্যালার্জি</string>
+
+    <string name="title_contact_management">জরুরি যোগাযোগ</string>
+    <string name="hint_contact_name">যোগাযোগের নাম</string>
+    <string name="hint_contact_phone">মোবাইল নম্বর (+৮৮০...)</string>
+    <string name="btn_add_contact">যোগাযোগ যোগ করুন</string>
+
+    <string name="title_pin_setup">নিরাপত্তা পিন সেটআপ</string>
+    <string name="hint_true_pin">প্রধান পিন (৪–৬ সংখ্যা)</string>
+    <string name="hint_decoy_pin">ডিকয় পিন (চাপের মধ্যে ব্যবহারের জন্য)</string>
+    <string name="btn_complete_setup">সেটআপ সম্পন্ন করুন</string>
+
+    <!-- Dashboard & Controls -->
+    <string name="status_protected">সুরক্ষা ব্যবস্থা সক্রিয়</string>
+    <string name="btn_trigger_sos">ম্যানুয়াল এসওএস পাঠান</string>
+    <string name="btn_start_escort">এসকর্ট মোড শুরু করুন</string>
+    <string name="btn_stop_escort">এসকর্ট সেশন বন্ধ করুন</string>
+
+    <!-- Active Escort -->
+    <string name="title_active_escort">সক্রিয় এসকর্ট মোড</string>
+    <string name="label_countdown_prompt">চেক-ইন করতে প্রধান পিন দিন</string>
+    <string name="btn_checkin">আমি নিরাপদ আছি (চেক-ইন)</string>
+
+    <!-- Decoy Screen -->
+    <string name="decoy_safe_title">নোট ও কাজ</string>
+    <string name="decoy_empty_state">কোনো সক্রিয় নোট সংরক্ষিত নেই।</string>
+</resources>
