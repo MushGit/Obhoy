@@ -5,6 +5,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -20,6 +21,13 @@ class ActiveEscortTimerService : Service() {
     private var countDownTimer: CountDownTimer? = null
     private var timeRemainingMs: Long = 0
 
+    // Persists the absolute end time so a killed/restarted service (or a
+    // device reboot, if BootReceiver checks this) can recompute the correct
+    // remaining duration instead of silently losing the session.
+    private val prefs by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -33,56 +41,99 @@ class ActiveEscortTimerService : Service() {
             }
             ACTION_CANCEL_TIMER -> {
                 cancelCountdown()
+                clearPersistedEndTime()
                 stopSelf()
             }
+            null -> {
+                // Service was restarted by the OS (e.g. after being killed
+                // under memory pressure) with no explicit action. Try to
+                // resume an in-progress session from the persisted end time
+                // rather than silently dropping the safety timer.
+                resumeIfSessionInProgress()
+            }
         }
-        return START_NOT_STICKY
+        // Changed from START_NOT_STICKY: if the OS kills this service while
+        // a session is active, we want it restarted so the fail-safe (silent
+        // emergency dispatch on timeout) still has a chance to fire.
+        return START_REDELIVER_INTENT
     }
 
     private fun startCountdown(durationMs: Long) {
-        val notification = buildTimerNotification("Escort active: ${durationMs / 60000} min remaining")
+        val endTimeMillis = System.currentTimeMillis() + durationMs
+        persistEndTime(endTimeMillis)
+        beginCountdownUntil(endTimeMillis)
+    }
 
-        // Explicitly declare FOREGROUND_SERVICE_TYPE_LOCATION on API 29+ / Android 14+
+    private fun resumeIfSessionInProgress() {
+        val endTimeMillis = prefs.getLong(KEY_END_TIME, -1L)
+        if (endTimeMillis <= 0L) return // no session was in progress
+
+        val remaining = endTimeMillis - System.currentTimeMillis()
+        if (remaining <= 0L) {
+            // Session should already have ended while we were down —
+            // fire the fail-safe dispatch immediately rather than dropping it.
+            clearPersistedEndTime()
+            triggerEmergencyDispatch()
+            stopSelf()
+        } else {
+            beginCountdownUntil(endTimeMillis)
+        }
+    }
+
+    private fun beginCountdownUntil(endTimeMillis: Long) {
+        val notification = buildTimerNotification()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-            )
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
 
+        val durationMs = endTimeMillis - System.currentTimeMillis()
+
         countDownTimer?.cancel()
-        countDownTimer = object : CountDownTimer(durationMs, 1000) {
+        countDownTimer = object : CountDownTimer(durationMs.coerceAtLeast(0), 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 timeRemainingMs = millisUntilFinished
-                
-                // Broadcast update to ActiveEscortActivity UI
+
+                // In-process notification only — scoped to our own package so
+                // no other app on the device can listen in on session state.
                 val intent = Intent(ACTION_TIMER_TICK).apply {
                     putExtra(EXTRA_TIME_REMAINING, millisUntilFinished)
+                    setPackage(packageName)
                 }
                 sendBroadcast(intent)
 
-                // Haptic feedback warning in the final 60 seconds
                 if (millisUntilFinished in 1000..60000 && (millisUntilFinished / 1000) % 10 == 0L) {
                     triggerWarningVibration()
                 }
             }
 
             override fun onFinish() {
-                // Timer expired without safe PIN entry -> Trigger Silent Emergency Dispatch
-                val emergencyIntent = Intent(this@ActiveEscortTimerService, ObhoyForegroundService::class.java).apply {
-                    action = ObhoyForegroundService.ACTION_TRIGGER_EMERGENCY
-                }
-                ContextCompat.startForegroundService(this@ActiveEscortTimerService, emergencyIntent)
+                clearPersistedEndTime()
+                triggerEmergencyDispatch()
                 stopSelf()
             }
         }.start()
     }
 
+    private fun triggerEmergencyDispatch() {
+        val emergencyIntent = Intent(this, ObhoyForegroundService::class.java).apply {
+            action = ObhoyForegroundService.ACTION_TRIGGER_EMERGENCY
+        }
+        ContextCompat.startForegroundService(this, emergencyIntent)
+    }
+
     private fun cancelCountdown() {
         countDownTimer?.cancel()
+    }
+
+    private fun persistEndTime(endTimeMillis: Long) {
+        prefs.edit().putLong(KEY_END_TIME, endTimeMillis).apply()
+    }
+
+    private fun clearPersistedEndTime() {
+        prefs.edit().remove(KEY_END_TIME).apply()
     }
 
     private fun triggerWarningVibration() {
@@ -100,22 +151,27 @@ class ActiveEscortTimerService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Generic name — visible in system notification settings,
+            // shouldn't hint at what the app or feature actually is.
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Obhoy Active Escort",
+                "Background Sync",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Active safety timer monitoring"
+                description = "Routine background service"
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
     }
 
-    private fun buildTimerNotification(contentText: String): Notification {
+    private fun buildTimerNotification(): Notification {
+        // Deliberately generic and static — no app name, no feature name,
+        // no countdown. A foreground service notification is mandatory on
+        // Android 8+, but its content doesn't have to reveal anything.
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Obhoy Active Escort")
-            .setContentText(contentText)
+            .setContentTitle("Device Sync")
+            .setContentText("Background service running")
             .setSmallIcon(R.drawable.obhoy)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
@@ -127,12 +183,15 @@ class ActiveEscortTimerService : Service() {
     companion object {
         const val CHANNEL_ID = "obhoy_escort_channel"
         const val NOTIFICATION_ID = 1002
-        
+
         const val ACTION_START_TIMER = "com.obhoy.app.ACTION_START_TIMER"
         const val ACTION_CANCEL_TIMER = "com.obhoy.app.ACTION_CANCEL_TIMER"
         const val ACTION_TIMER_TICK = "com.obhoy.app.ACTION_TIMER_TICK"
-        
+
         const val EXTRA_DURATION_MINUTES = "extra_duration_minutes"
         const val EXTRA_TIME_REMAINING = "extra_time_remaining"
+
+        private const val PREFS_NAME = "obhoy_escort_state"
+        private const val KEY_END_TIME = "escort_end_time_millis"
     }
 }
