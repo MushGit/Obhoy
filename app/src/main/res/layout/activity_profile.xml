@@ -74,7 +74,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Hardware trigger and location telemetry active"
+                            android:text="Please keep your location turned on"
                             android:textColor="@color/white"
                             android:textSize="12sp" />
                     </LinearLayout>
