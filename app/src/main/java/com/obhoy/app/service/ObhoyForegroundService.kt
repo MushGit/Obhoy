@@ -34,13 +34,7 @@ class ObhoyForegroundService : Service() {
 
         val app = application as ObhoyApplication
         
-        // Start background sensor listeners cleanly
-        try {
-            app.gnssEngine.startListening()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize GNSS Engine background listener", e)
-        }
-        
+        // Start background sensor listeners
         app.barometerEngine.startListening()
 
         registerScreenToggleReceiver()
@@ -150,13 +144,6 @@ class ObhoyForegroundService : Service() {
         unregisterScreenToggleReceiver()
 
         val app = application as ObhoyApplication
-        
-        try {
-            app.gnssEngine.stopListening()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping GNSS Engine listener", e)
-        }
-        
         app.barometerEngine.stopListening()
 
         serviceScope.cancel()
