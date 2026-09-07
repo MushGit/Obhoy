@@ -11,7 +11,7 @@ import com.obhoy.app.data.repository.UserProfileRepository
 import com.obhoy.app.sensor.BarometerElevationEngine
 import com.obhoy.app.engine.DispatchManager
 import com.obhoy.app.sensor.GnssSatelliteEngine
-import com.obhoy.app.sensor.LocationLoggerWorker
+import com.obhoy.app.sensor.LocationCacheRefreshWorker
 import com.obhoy.app.util.CryptoUtils
 import com.obhoy.app.util.NotificationHelper
 import com.obhoy.app.util.SmsDispatcher
@@ -75,8 +75,10 @@ class ObhoyApplication : Application() {
             smsDispatcher = smsDispatcher
         )
 
-        // 6. Schedule Background Telemetry Caching
-        scheduleLocationLoggerWork()
+        // 6. Schedule periodic location cache refresh, writing into the
+        // already-encrypted Room DB (see LocationCacheRefreshWorker),
+        // replacing the old unencrypted, unread LocationLoggerWorker.
+        scheduleLocationCacheRefresh()
     }
 
     private fun getOrCreateDatabasePassphrase(): ByteArray {
@@ -93,13 +95,13 @@ class ObhoyApplication : Application() {
         }
     }
 
-    private fun scheduleLocationLoggerWork() {
-        val locationWorkRequest = PeriodicWorkRequestBuilder<LocationLoggerWorker>(
+    private fun scheduleLocationCacheRefresh() {
+        val locationWorkRequest = PeriodicWorkRequestBuilder<LocationCacheRefreshWorker>(
             15, TimeUnit.MINUTES
         ).build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            LocationLoggerWorker.WORK_NAME,
+            LocationCacheRefreshWorker.WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
             locationWorkRequest
         )
