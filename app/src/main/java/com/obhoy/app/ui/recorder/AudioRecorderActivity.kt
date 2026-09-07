@@ -1,6 +1,7 @@
 package com.obhoy.app.ui.recorder
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +44,10 @@ class AudioRecorderActivity : AppCompatActivity() {
             } else {
                 requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
+        }
+
+        binding.btnViewRecordings.setOnClickListener {
+            startActivity(Intent(this, RecordingsListActivity::class.java))
         }
     }
 
