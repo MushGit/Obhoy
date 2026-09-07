@@ -20,6 +20,7 @@ import com.obhoy.app.databinding.ItemContactBinding
 import com.obhoy.app.service.ActiveEscortTimerService
 import com.obhoy.app.service.ObhoyForegroundService
 import com.obhoy.app.ui.escort.ActiveEscortActivity
+import com.obhoy.app.ui.recorder.AudioRecorderActivity
 import kotlinx.coroutines.launch
 
 class ProfileActivity : AppCompatActivity() {
@@ -79,6 +80,10 @@ class ProfileActivity : AppCompatActivity() {
             ContextCompat.startForegroundService(this, startEscortIntent)
             startActivity(Intent(this, ActiveEscortActivity::class.java))
         }
+
+        binding.btnOpenAudioRecorder.setOnClickListener {
+            startActivity(Intent(this, AudioRecorderActivity::class.java))
+        }
     }
 
     private fun observeEmergencyContacts() {
@@ -119,7 +124,6 @@ class ProfileActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
             val contact = contactsList[position]
-            // Map Entity fields to item_contact.xml layout views
             holder.binding.run {
                 tvContactName.text = contact.name
                 tvContactPhone.text = contact.phoneNumber
