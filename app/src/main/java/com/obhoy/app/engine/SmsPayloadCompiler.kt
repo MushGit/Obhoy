@@ -5,9 +5,13 @@ import java.util.Locale
 
 object SmsPayloadCompiler {
 
+    private const val GSM7_SEGMENT_LIMIT = 160
+    private const val UCS2_SEGMENT_LIMIT = 70
+
     /**
      * Compiles a concise, high-reliability emergency SMS payload.
-     * Guaranteed to stay under 160 characters to fit a single GSM SMS segment.
+     * The location link is always kept intact — if space is tight, the
+     * user's name is shortened first, never the coordinates or floor.
      */
     fun compileEmergencySms(
         userProfile: UserProfileEntity,
@@ -17,31 +21,47 @@ object SmsPayloadCompiler {
         isFallbackLocation: Boolean = false
     ): String {
         val name = userProfile.fullName.trim()
-        val nid = userProfile.nationalId?.takeIf { it.isNotBlank() }?.let { " NID:$it" } ?: ""
 
         val locationPayload = when {
-            // Check for valid non-zero coordinates
             latitude != null && longitude != null && isValidCoordinate(latitude, longitude) -> {
                 val formattedLat = String.format(Locale.US, "%.5f", latitude)
                 val formattedLng = String.format(Locale.US, "%.5f", longitude)
                 val baseLink = "https://maps.google.com/?q=$formattedLat,$formattedLng"
                 if (isFallbackLocation) "$baseLink (Last Known)" else baseLink
             }
-            // Offline signal blocked / null location handling
             else -> "Signal Blocked (No Fix)"
         }
 
-        val floorPayload = floorEstimate.ifBlank { "Unknown" }
+        // Floor is presented as an estimate, since it may be refined and
+        // resent moments later once weather-corrected pressure data arrives.
+        val floorPayload = floorEstimate.ifBlank { "Unknown" }.let { "~$it (est.)" }
 
-        // Compile payload targeting standard GSM 7-bit 160 char limit
-        val payload = "EMERGENCY! $name$nid needs help! Loc: $locationPayload Floor: $floorPayload"
+        val limit = segmentLimitFor(name)
 
-        // Hard truncation safety fallback if user name is exceptionally long
-        return if (payload.length > 160) {
-            "EMERGENCY! $name needs help! Loc: $locationPayload Floor: $floorPayload".take(160)
+        // Fixed portion that must never be cut: everything except the name.
+        val suffix = " needs help! Loc: $locationPayload Floor: $floorPayload"
+        val prefix = "EMERGENCY! "
+        val fixedLength = prefix.length + suffix.length
+
+        val availableForName = (limit - fixedLength).coerceAtLeast(0)
+        val safeName = if (name.length > availableForName) {
+            if (availableForName > 1) name.take(availableForName - 1) + "…" else ""
         } else {
-            payload
+            name
         }
+
+        return "$prefix$safeName$suffix"
+    }
+
+    /**
+     * A message containing any non-GSM-7 character (e.g. Bangla script)
+     * will be sent as UCS-2, which caps a single segment at 70 characters
+     * instead of 160. Using the correct limit avoids an unexpected,
+     * unintended multi-part split.
+     */
+    private fun segmentLimitFor(text: String): Int {
+        val isGsm7Compatible = text.all { it.code in 0x20..0x7E || it == '\n' || it == '\r' }
+        return if (isGsm7Compatible) GSM7_SEGMENT_LIMIT else UCS2_SEGMENT_LIMIT
     }
 
     private fun isValidCoordinate(latitude: Double, longitude: Double): Boolean {
