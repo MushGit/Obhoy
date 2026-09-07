@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.security.crypto.EncryptedFile
+import androidx.security.crypto.MasterKey
 import java.io.File
 
 class AudioEvidenceRecorder(private val context: Context) {
@@ -15,71 +17,34 @@ class AudioEvidenceRecorder(private val context: Context) {
     @Volatile
     private var isRecording = false
 
+    // MediaRecorder must write to a real file path directly — it can't
+    // write into an EncryptedFile's stream in real time. So we record to a
+    // temporary plaintext file, then immediately re-encrypt it into the
+    // vault and delete the temp file the moment recording stops.
+    private var pendingTempFile: File? = null
+    private var pendingFinalFile: File? = null
+
+    private val masterKey by lazy {
+        MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+    }
+
     fun startRecording(): File? {
         if (isRecording) return null
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            return null // Caller should check permission before invoking this
+            return null
         }
 
-        // TODO: evidence audio is currently stored unencrypted on disk.
-        // Given the threat model (device may be accessed by a coercive
-        // party), this should be encrypted at rest — e.g. via a
-        // Keystore-backed CipherOutputStream — same as the location cache
-        // fix applied to LocationLoggerWorker.
-        val outputDir = File(context.filesDir, "evidence_vault")
-        if (!outputDir.exists()) {
-            outputDir.mkdirs()
-        }
+        val vaultDir = File(context.filesDir, "evidence_vault")
+        if (!vaultDir.exists()) vaultDir.mkdirs()
+
+        val tempDir = File(context.cacheDir, "evidence_tmp")
+        if (!tempDir.exists()) tempDir.mkdirs()
 
         val timestamp = System.currentTimeMillis()
-        val outputFile = File(outputDir, "audio_evidence_$timestamp.aac")
-
-        return try {
-            mediaRecorder = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(context)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaRecorder()
-            }).apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setAudioEncodingBitRate(128000)
-                setAudioSamplingRate(44100)
-                setOutputFile(outputFile.absolutePath)
-                prepare()
-                start()
-            }
-            isRecording = true
-            outputFile
-        } catch (e: Exception) {
-            // Catches IOException, IllegalStateException, RuntimeException,
-            // and SecurityException — any of which can occur if the
-            // recorder is in a bad state, permission is revoked mid-call,
-            // or the microphone is unavailable (e.g. in use by another app).
-            e.printStackTrace()
-            mediaRecorder?.release()
-            mediaRecorder = null
-            isRecording = false
-            null
-        }
-    }
-
-    fun stopRecording() {
-        if (!isRecording) return
-        try {
-            mediaRecorder?.apply {
-                stop()
-                release()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            mediaRecorder = null
-            isRecording = false
-        }
-    }
-}
+        val tempFile = File(tempDir, "recording_tmp_$timestamp.aac")
+        val final
