@@ -33,6 +33,13 @@
             android:layout_height="wrap_content"
             android:text="Start Recording" />
 
+        <Button
+            android:id="@+id/btnViewRecordings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="View Saved Recordings" />
+
     </LinearLayout>
 
 </LinearLayout>
