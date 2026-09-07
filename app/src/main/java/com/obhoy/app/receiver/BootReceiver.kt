@@ -8,7 +8,7 @@ import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.obhoy.app.sensor.LocationLoggerWorker
+import com.obhoy.app.sensor.LocationCacheRefreshWorker
 import com.obhoy.app.service.ActiveEscortTimerService
 import com.obhoy.app.service.ObhoyForegroundService
 import java.util.concurrent.TimeUnit
@@ -20,27 +20,25 @@ class BootReceiver : BroadcastReceiver() {
         if (action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             Log.i(TAG, "Boot/Replaced action received ($action). Rescheduling background tasks and foreground service.")
 
-            // 1. Reschedule Periodic Location Logging with WorkManager
-            scheduleLocationLoggerWork(context)
+            // 1. Reschedule Periodic Location Cache Refresh with WorkManager
+            scheduleLocationCacheRefresh(context)
 
             // 2. Restart Persistent Background Foreground Monitoring Service
             startBackgroundService(context)
 
             // 3. Resume an in-progress Active Escort session, if one was
-            // running before the reboot. Without this, a device restart
-            // silently drops the safety timer with no recovery and no
-            // fail-safe dispatch if the window had already expired.
+            // running before the reboot.
             resumeEscortSessionIfAny(context)
         }
     }
 
-    private fun scheduleLocationLoggerWork(context: Context) {
-        val locationWorkRequest = PeriodicWorkRequestBuilder<LocationLoggerWorker>(
+    private fun scheduleLocationCacheRefresh(context: Context) {
+        val locationWorkRequest = PeriodicWorkRequestBuilder<LocationCacheRefreshWorker>(
             15, TimeUnit.MINUTES
         ).build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            LocationLoggerWorker.WORK_NAME,
+            LocationCacheRefreshWorker.WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
             locationWorkRequest
         )
@@ -63,9 +61,6 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun resumeEscortSessionIfAny(context: Context) {
-        // No explicit action set — ActiveEscortTimerService's onStartCommand
-        // treats a null action as "check for and resume a persisted session,"
-        // and is a no-op if none was in progress.
         val escortIntent = Intent(context, ActiveEscortTimerService::class.java)
 
         try {
