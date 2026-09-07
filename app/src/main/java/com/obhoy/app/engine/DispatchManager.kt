@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class DispatchManager(
     private val context: Context,
@@ -26,60 +27,86 @@ class DispatchManager(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val weatherRepository = WeatherRepository()
 
-    /**
-     * Entry point triggered asynchronously by receivers or accessibility service.
-     */
     fun triggerEmergencyDispatch(triggerType: String = "HARDWARE_POWER_TOGGLE") {
         scope.launch {
             try {
                 val app = context.applicationContext as ObhoyApplication
 
-                // 1. Fetch best available location via GnssSatelliteEngine
+                // 1. Get the best DB-backed location entity first, so it can
+                // be passed as a real fallback (previously this was never
+                // supplied, so that fallback tier was always dead).
+                val dbLocationEntity = locationRepository.getLatestLocationSync()
+                val dbFallbackLocation: Location? = dbLocationEntity?.let {
+                    Location("obhoy_db_fallback").apply {
+                        latitude = it.latitude
+                        longitude = it.longitude
+                        time = it.timestamp
+                    }
+                }
+
+                // 2. Attempt a live fix, now with a real fallback wired in.
                 var isFallback = false
-                val freshLocation: Location? = app.gnssEngine.awaitFreshLocation(timeoutMs = 45_000L)
+                val freshLocation: Location? = app.gnssEngine.awaitFreshLocation(
+                    timeoutMs = 45_000L,
+                    dbFallbackLocation = dbFallbackLocation
+                )
 
                 var lat: Double? = freshLocation?.latitude
                 var lng: Double? = freshLocation?.longitude
 
-                // 2. If live satellite acquisition fails, fallback to last saved DB location entity
                 if (lat == null || lng == null || !isValidCoordinate(lat, lng)) {
-                    val dbLocationEntity = locationRepository.getLatestLocationSync()
-                    if (dbLocationEntity != null && isValidCoordinate(dbLocationEntity.latitude, dbLocationEntity.longitude)) {
-                        lat = dbLocationEntity.latitude
-                        lng = dbLocationEntity.longitude
-                        isFallback = true
-                    } else {
-                        lat = null
-                        lng = null
-                    }
+                    lat = null
+                    lng = null
+                } else if (freshLocation === dbFallbackLocation) {
+                    isFallback = true
                 }
 
-                // 3. Fetch real-time weather pressure baseline if coordinates are valid
-                if (lat != null && lng != null) {
-                    val baseline = weatherRepository.fetchSurfacePressureHpa(lat, lng)
-                    if (baseline != null) {
-                        app.barometerEngine.updateBaselinePressure(baseline)
-                    }
+                // Persist this fix (if valid) so future dispatches have a
+                // fresher DB fallback than whatever was used just now.
+                if (freshLocation != null && lat != null) {
+                    locationRepository.logLocationPoint(freshLocation)
                 }
 
-                // 4. Compute accurate floor after pressure baseline update
-                val floor = app.barometerEngine.getEstimatedFloor()
-
+                // 3. Send the emergency SMS immediately with best-available
+                // location. Do NOT wait on the weather-corrected floor
+                // estimate — that's a refinement, not a requirement, and
+                // must never delay the life-safety message.
+                val initialFloor = app.barometerEngine.getEstimatedFloor()
                 executeSmsDispatch(
                     latitude = lat,
                     longitude = lng,
-                    floorEstimate = floor,
+                    floorEstimate = initialFloor,
                     isFallbackLocation = isFallback
                 )
+
+                // 4. Only after the SMS is already sent, optionally refine
+                // the floor estimate using weather data, bounded by a short
+                // timeout so a slow/unreachable API can't hang this coroutine
+                // indefinitely. If it meaningfully changes the floor, send a
+                // single follow-up correction.
+                if (lat != null && lng != null) {
+                    val baseline = withTimeoutOrNull(8_000L) {
+                        weatherRepository.fetchSurfacePressureHpa(lat, lng)
+                    }
+                    if (baseline != null) {
+                        app.barometerEngine.updateBaselinePressure(baseline)
+                        val refinedFloor = app.barometerEngine.getEstimatedFloor()
+                        if (refinedFloor != initialFloor) {
+                            executeSmsDispatch(
+                                latitude = lat,
+                                longitude = lng,
+                                floorEstimate = refinedFloor,
+                                isFallbackLocation = isFallback,
+                            )
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to execute background emergency dispatch trigger", e)
             }
         }
     }
 
-    /**
-     * Core dispatch runner using existing repositories and SmsPayloadCompiler logic.
-     */
     suspend fun executeSmsDispatch(
         latitude: Double?,
         longitude: Double?,
@@ -97,7 +124,6 @@ class DispatchManager(
             return@withContext
         }
 
-        // Updated signature call matching SmsPayloadCompiler
         val payload = SmsPayloadCompiler.compileEmergencySms(
             userProfile = userProfile,
             latitude = latitude,
