@@ -81,6 +81,18 @@
             android:name=".ui.escort.DecoySafeActivity"
             android:exported="false" />
 
+        <!-- Standalone Audio Evidence Recorder -->
+        <activity
+            android:name=".ui.recorder.AudioRecorderActivity"
+            android:exported="false"
+            android:label="Audio Recorder" />
+
+        <!-- Saved Recordings List / Playback / Share -->
+        <activity
+            android:name=".ui.recorder.RecordingsListActivity"
+            android:exported="false"
+            android:label="Saved Recordings" />
+
         <!-- Core Foreground Dispatch Service -->
         <service
             android:name=".service.ObhoyForegroundService"
@@ -130,6 +142,20 @@
                 <action android:name="android.intent.action.SCREEN_ON" />
             </intent-filter>
         </receiver>
+
+        <!-- FileProvider: enables securely sharing decrypted recording
+             copies with other apps (Messenger, email, etc.) via a
+             content:// URI, without exposing raw file paths or any other
+             app-private storage. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
