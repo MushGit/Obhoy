@@ -14,7 +14,6 @@ class LocationRepository(
 ) {
 
     fun getLatestLocationSync(): LocationHistoryEntity? {
-        // 1. Direct memory check from live GNSS Engine
         val liveLocation = gnssEngine.lastKnownLocation
         if (liveLocation != null && liveLocation.latitude != 0.0 && liveLocation.longitude != 0.0) {
             return LocationHistoryEntity(
@@ -28,27 +27,51 @@ class LocationRepository(
             )
         }
 
-        // 2. Fallback to cached point from Room DB
+        // Fallback to the most recent point actually persisted to Room.
         return locationHistoryDao.getLatestLocationSync()
     }
 
+    /**
+     * Persists a location point to Room. This is the method that makes the
+     * DB fallback tier meaningful — it must actually be called periodically
+     * (e.g. from a lightweight periodic worker or whenever a fresh fix is
+     * obtained elsewhere) or the DB fallback will always be empty.
+     */
     suspend fun logCurrentLocationPoint(): LocationHistoryEntity? = withContext(Dispatchers.IO) {
         val lastLocation = gnssEngine.lastKnownLocation ?: return@withContext null
-        val pressure = barometerEngine.currentPressure
-        val floorEstimate = barometerEngine.getEstimatedFloor()
 
         val entity = LocationHistoryEntity(
             latitude = lastLocation.latitude,
             longitude = lastLocation.longitude,
             altitudeMeters = lastLocation.altitude,
-            pressureHpa = pressure,
-            floorEstimate = floorEstimate,
+            pressureHpa = barometerEngine.currentPressure,
+            floorEstimate = barometerEngine.getEstimatedFloor(),
             accuracyMeters = lastLocation.accuracy,
             timestamp = System.currentTimeMillis()
         )
 
         locationHistoryDao.insertLocationPoint(entity)
         entity
+    }
+
+    /**
+     * Explicitly persists a given Location (e.g. one just obtained by
+     * GnssSatelliteEngine.awaitFreshLocation) rather than relying on
+     * gnssEngine.lastKnownLocation being pre-populated. This replaces the
+     * old no-op saveLocationToLocalDb() stub that used to live inside
+     * GnssSatelliteEngine and never actually wrote anything.
+     */
+    suspend fun logLocationPoint(location: android.location.Location) = withContext(Dispatchers.IO) {
+        val entity = LocationHistoryEntity(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            altitudeMeters = location.altitude,
+            pressureHpa = barometerEngine.currentPressure,
+            floorEstimate = barometerEngine.getEstimatedFloor(),
+            accuracyMeters = location.accuracy,
+            timestamp = location.time
+        )
+        locationHistoryDao.insertLocationPoint(entity)
     }
 
     suspend fun getLatestLocation(): LocationHistoryEntity? = withContext(Dispatchers.IO) {
